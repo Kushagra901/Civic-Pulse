@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CITIZEN
+  MODERATOR
+  ADMIN
+  WORKER_TEAM
+}
+
+enum IncidentStatus {
+  REPORTED
+  TRIAGED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  VERIFIED
+  CLOSED
+}
+
+enum ConfirmationType {
+  CONFIRM
+  DISPUTE
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CITIZEN)
+  trustScore   Int      @default(0)
+  refreshToken String?
+  createdAt    DateTime @default(now())
+
+  incidentsCreated Incident[] @relation("CreatedIncidents")
+  reports          Report[]
+  confirmations    Confirmation[]
+  timelineEvents   TimelineEvent[]
+}
+
+model Incident {
+  id               String         @id @default(uuid())
+  title            String
+  category         String
+  status           IncidentStatus @default(REPORTED)
+  description      String?
+  lat              Float
+  lng              Float
+  areaCode         String?
+  severityScore    Float          @default(0)
+  credibilityScore Float          @default(0)
+
+  createdById String
+  createdBy   User   @relation("CreatedIncidents", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reports        Report[]
+  confirmations  Confirmation[]
+  timelineEvents TimelineEvent[]
+  assignments    Assignment[]
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  incidentId  String
+  incident    Incident @relation(fields: [incidentId], references: [id])
+  reportedById String
+  reportedBy   User     @relation(fields: [reportedById], references: [id])
+
+  description String
+  photoUrls   Json?
+  lat         Float
+  lng         Float
+
+  createdAt DateTime @default(now())
+
+  @@index([incidentId, createdAt])
+}
+
+model Confirmation {
+  id         String           @id @default(uuid())
+  incidentId String
+  incident   Incident         @relation(fields: [incidentId], references: [id])
+  userId     String
+  user       User             @relation(fields: [userId], references: [id])
+  type       ConfirmationType
+
+  createdAt DateTime @default(now())
+
+  @@unique([incidentId, userId])
+}
+
+model TimelineEvent {
+  id         String   @id @default(uuid())
+  incidentId String
+  incident   Incident @relation(fields: [incidentId], references: [id])
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+
+  eventType  String
+  fromStatus IncidentStatus?
+  toStatus   IncidentStatus?
+  meta       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([incidentId, createdAt])
+}
+
+model Assignment {
+  id         String   @id @default(uuid())
+  incidentId String
+  incident   Incident @relation(fields: [incidentId], references: [id])
+  teamName   String
+  assignedBy String
+  active     Boolean  @default(true)
+  assignedAt DateTime @default(now())
+}
