@@ -94,3 +94,186 @@ civicpulse/
   client/
     src/
     index.html
+
+
+## ✅ Requirements (First Time Setup)
+
+Install these before starting:
+
+- **Node.js** (LTS recommended)
+- **Git**
+- **Docker Desktop** *(recommended)*
+- **pgAdmin** *(optional)* for viewing database data
+
+---
+
+## 🚀 Run Locally (Docker Recommended)
+
+### 1️⃣ Start PostgreSQL + Redis
+
+Open Terminal in project root:
+
+```bash
+cd civicpulse
+docker compose up -d
+2️⃣ Backend Setup (API + Prisma)
+
+Open a new Terminal:
+
+cd server
+npm install
+npx prisma generate
+npx prisma migrate dev --name init
+npm run dev
+
+
+Backend:
+
+✅ http://localhost:8080
+
+Health check:
+
+✅ http://localhost:8080/health
+
+3️⃣ Start Worker (BullMQ)
+
+Open another Terminal:
+
+cd server
+npm run worker
+
+
+The worker recalculates credibility and severity scores using background jobs.
+
+4️⃣ Frontend Setup (React)
+
+Open another Terminal:
+
+cd client
+npm install
+npm run dev
+
+
+Frontend:
+
+✅ http://localhost:5173
+
+🧪 How to Use the App
+
+Open: http://localhost:5173
+
+Register a user
+
+Login
+
+Go to Feed
+
+Create a report (title, category, description, location)
+
+Open an incident → Confirm / Dispute
+
+Refresh feed → see updated scores
+
+📊 View Database Data (Users, Incidents, Reports)
+Option A: Prisma Studio (Fastest)
+cd server
+npx prisma studio
+
+
+Open:
+
+✅ http://localhost:5555
+
+Option B: pgAdmin
+
+Docker default credentials:
+
+Host: localhost
+
+Port: 5432
+
+Database: civicpulse
+
+Username: postgres
+
+Password: postgres
+
+To see registered users:
+
+Schemas → public → Tables → "User"
+
+Right-click → View/Edit Data → All Rows
+
+Or run this in Query Tool:
+
+SELECT id, name, email, role, "createdAt"
+FROM "User"
+ORDER BY "createdAt" DESC;
+
+🔧 Environment Variables
+Backend .env
+
+⚠️ Do NOT push .env to GitHub
+Use .env.example and create .env.
+
+Example:
+
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/civicpulse?schema=public"
+REDIS_URL="redis://localhost:6379"
+JWT_ACCESS_SECRET="your_secret_here"
+JWT_REFRESH_SECRET="your_secret_here"
+
+🛑 Stop Everything
+
+Stop frontend / backend / worker:
+
+Press CTRL + C
+
+Stop Docker containers:
+
+docker compose down
+
+🐛 Troubleshooting
+❌ Postgres auth failed (P1000)
+
+Ensure .env matches docker-compose.yml:
+
+postgres:postgres
+
+❌ Redis ECONNREFUSED
+
+Start Redis container:
+
+docker compose up -d
+
+❌ Frontend unstyled (Tailwind not applied)
+
+Check:
+
+client/src/index.css contains:
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+client/src/main.jsx imports:
+
+import "./index.css";
+
+🌟 Future Enhancements
+
+📍 Near Me Feed (radius-based incidents)
+
+📷 Photo uploads + moderation
+
+🧑‍💼 Admin dashboard for authorities
+
+🔔 Real-time updates (Socket.IO)
+
+🤖 Spam / fake report detection
+
+👨‍💻 Author
+
+Built by Kushagra Srivastava
+Backend-focused fullstack project (BTech level) showcasing scalable backend patterns.
