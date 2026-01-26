@@ -1,49 +1,88 @@
-# CivicPulse 🌍✨  
-A full-stack **community signal platform** to report civic issues, verify them with public confirmations, and help prioritize what matters most.
+<p align="center">
+  <img src="https://img.icons8.com/fluency/96/city.png" alt="CivicPulse" width="70"
+  style="border-radius: 50%; border: 4px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.18);" />
+</p>
 
-> Built with **React + Vite**, **Node.js + Express**, **PostgreSQL + Prisma**, **Redis + BullMQ**, and **Docker Compose**.
+<h1 align="center">CivicPulse</h1>
+<p align="center"><b>📍 Real-time civic issue reporting, verification & prioritization for safer communities 📍</b></p>
 
----
-
-## 📌 What CivicPulse Does
-CivicPulse helps communities track real problems like:
-- 🚧 Roads & potholes
-- 💡 Electricity & streetlights
-- 🚰 Water issues
-- 🧹 Sanitation
-- 🛡️ Safety concerns
-
-### Key Features
-✅ User Authentication (Register/Login)  
-✅ Create Incident Reports  
-✅ Auto credibility scoring (worker + queue)  
-✅ Confirm / Dispute incidents  
-✅ Timeline tracking  
-✅ Location support (map + GPS + search) *(frontend)*  
-✅ Modern responsive UI (TailwindCSS)  
-✅ Production-ready backend patterns (validation, error handling, scalable structure)
+<p align="center">
+  <img alt="Platform" src="https://img.shields.io/badge/Platform-Web-blue?style=for-the-badge">
+  <img alt="Stack" src="https://img.shields.io/badge/Stack-PERN%20%2B%20Redis%2FBullMQ-purple?style=for-the-badge">
+  <img alt="Status" src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge">
+</p>
 
 ---
 
-## 🧱 Tech Stack
-### Frontend
-- React (Vite)
-- TailwindCSS
-- Leaflet + React Leaflet (Map)
-- react-hot-toast (toasts)
+## 🌍 About
 
-### Backend
-- Node.js + Express
-- Prisma ORM
-- PostgreSQL
-- Redis + BullMQ (background jobs)
+**CivicPulse** is a modern full-stack platform that helps communities **report local issues**, **verify signals**, and **prioritize what needs attention** using credibility-driven ranking.
 
-### DevOps (optional)
-- Docker + Docker Compose
+It’s built to feel like a social feed—but optimized for **real civic impact**, not vanity metrics.
 
 ---
 
-## 📁 Project Structure
+## 🚀 Quick Start
+
+> **1. Start services** (Postgres + Redis)  
+> **2. Start API** (Express + Prisma)  
+> **3. Start Worker** (BullMQ background jobs)  
+> **4. Start Frontend** (React + Tailwind)  
+> **5. Report → Verify → Track**
+
+---
+
+## ✨ Features
+
+- 🧾 **Incident Reporting:** Create civic issue reports with category + details
+- ✅ **Confirm / Dispute:** Community verification improves credibility
+- 🧠 **Credibility Scoring:** Worker + queue updates incident ranking
+- 🕒 **Timeline Tracking:** Status changes are recorded as events
+- 🗺️ **Accurate Location Input:**
+  - **Use My Location** (GPS)
+  - **Search a Place** (OpenStreetMap Nominatim)
+  - **Click-to-Pin Map** (Leaflet)
+- 🔎 **Filters:** Filter feed by category and status
+- 💬 **Clean UX:** Toast feedback, loading skeletons, empty states
+- 🔐 **Auth Ready:** JWT-based sessions (access/refresh token flow)
+
+---
+
+## 🏗 Architecture Overview
+
+**Frontend**
+- React (Vite) + TailwindCSS  
+- Map + Location Picker (Leaflet)
+
+**Backend**
+- Node.js + Express  
+- Prisma ORM + PostgreSQL  
+- Redis + BullMQ for background processing
+
+**Services**
+- PostgreSQL → persistent data storage
+- Redis → job queue + caching-ready
+
+---
+
+## 🖥 Programming Languages & Frameworks
+
+<p>
+  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/javascript/javascript.png" alt="JavaScript" width="32"/>
+  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/react/react.png" alt="React" width="32"/>
+  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/nodejs/nodejs.png" alt="Node.js" width="32"/>
+  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/express/express.png" alt="Express" width="32"/>
+  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/postgresql/postgresql.png" alt="PostgreSQL" width="32"/>
+  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/docker/docker.png" alt="Docker" width="32"/>
+  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/redis/redis.png" alt="Redis" width="32"/>
+  <img src="https://raw.githubusercontent.com/github/explore/80688e429a7d4ef2fca1e82350fe8e3517d3494d/topics/tailwind/tailwind.png" alt="TailwindCSS" width="32"/>
+</p>
+
+---
+
+## 🧱 Project Structure
+
 ```txt
 civicpulse/
   docker-compose.yml
@@ -55,174 +94,3 @@ civicpulse/
   client/
     src/
     index.html
-✅ Requirements (First Time Setup)
-
-Install these before starting:
-
-Node.js (LTS recommended)
-
-Git
-
-Docker Desktop (recommended)
-
-pgAdmin (optional) for viewing DB data
-
-🚀 Quick Start (Recommended: Docker)
-1️⃣ Start PostgreSQL + Redis (Docker)
-
-Open Terminal in project root:
-
-cd civicpulse
-docker compose up -d
-
-
-Check if running:
-
-docker ps
-
-2️⃣ Backend Setup (Prisma + API)
-
-Open a new Terminal:
-
-cd server
-npm install
-npx prisma generate
-npx prisma migrate dev --name init
-npm run dev
-
-
-Backend runs at:
-✅ http://localhost:8080
-Health check:
-✅ http://localhost:8080/health
-
-3️⃣ Start Worker (Background jobs)
-
-Open another Terminal:
-
-cd server
-npm run worker
-
-
-This worker updates scoring and credibility logic.
-
-4️⃣ Frontend Setup (React)
-
-Open another Terminal:
-
-cd client
-npm install
-npm run dev
-
-
-Frontend runs at:
-✅ http://localhost:5173
-
-🧪 How to Use the App
-
-Open frontend: http://localhost:5173
-
-Register a new user
-
-Login
-
-Go to Feed
-
-Create a civic report (add title, category, description, pick location)
-
-Open incident → Confirm / Dispute
-
-Refresh feed → scores update
-
-📊 View Database Data (Users, Incidents, Reports)
-Option A: Prisma Studio (Fastest)
-cd server
-npx prisma studio
-
-
-Open:
-✅ http://localhost:5555
-
-Option B: pgAdmin
-
-Use these credentials (Docker default):
-
-Host: localhost
-
-Port: 5432
-
-Database: civicpulse
-
-Username: postgres
-
-Password: postgres
-
-To see registered users:
-
-Schemas → public → Tables → "User" → Right click → View/Edit Data → All Rows
-Or run this query in Query Tool:
-
-SELECT id, name, email, role, "createdAt"
-FROM "User"
-ORDER BY "createdAt" DESC;
-
-🔧 Environment Variables
-Backend .env
-
-Do NOT push .env to GitHub.
-Use .env.example and create .env.
-
-Example:
-
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/civicpulse?schema=public"
-REDIS_URL="redis://localhost:6379"
-JWT_ACCESS_SECRET="your_secret_here"
-JWT_REFRESH_SECRET="your_secret_here"
-
-🛑 Stop Everything
-Stop frontend/backend/worker:
-
-Press:
-CTRL + C
-
-Stop docker containers:
-docker compose down
-
-🐛 Troubleshooting
-❌ Postgres auth failed (P1000)
-
-Check your .env matches docker-compose password:
-
-postgres:postgres
-
-❌ Redis ECONNREFUSED
-
-Make sure Redis container is running:
-
-docker compose up -d
-
-❌ Frontend looks unstyled
-
-Tailwind not applied → verify:
-
-client/src/index.css contains:
-@tailwind base; @tailwind components; @tailwind utilities;
-
-client/src/main.jsx imports:
-import "./index.css";
-
-🌟 Future Enhancements (Ideas)
-
-“Near Me” feed (radius search)
-
-Photo upload + moderation
-
-Admin dashboard for authorities
-
-Real-time updates with Socket.IO
-
-ML-based spam detection
-
-👨‍💻 Author
-
-Built by Kushagra Srivastava (Backend-focused fullstack project)
