@@ -21,3 +21,11 @@ body {
 ::selection {
   background: rgba(59, 130, 246, 0.2);
 }
+
+/* Highlight matching search terms in incident titles */
+mark {
+  background: #fef08a;   /* Tailwind yellow-200 */
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}

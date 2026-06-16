@@ -3,9 +3,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
+
 
 enum Role {
   CITIZEN
@@ -37,44 +39,58 @@ model User {
   role         Role     @default(CITIZEN)
   trustScore   Int      @default(0)
   refreshToken String?
+  isBanned     Boolean  @default(false)
   createdAt    DateTime @default(now())
 
-  incidentsCreated Incident[] @relation("CreatedIncidents")
+  incidentsCreated Incident[]      @relation("CreatedIncidents")
   reports          Report[]
   confirmations    Confirmation[]
   timelineEvents   TimelineEvent[]
+  notifications    Notification[]
 }
 
 model Incident {
-  id               String         @id @default(uuid())
-  title            String
-  category         String
-  status           IncidentStatus @default(REPORTED)
-  description      String?
-  lat              Float
-  lng              Float
-  areaCode         String?
-  severityScore    Float          @default(0)
-  credibilityScore Float          @default(0)
+  id          String         @id @default(uuid())
+  title       String
+  description String
+  category    String
+  status      IncidentStatus @default(REPORTED)
 
-  createdById String
-  createdBy   User   @relation("CreatedIncidents", fields: [createdById], references: [id])
+  // 🔥 Geo-spatial location
+  location Unsupported("geography(Point,4326)")
+
+  // Full-text search vector — maintained by a Postgres trigger
+  searchVector Unsupported("tsvector")?
+
+  severityScore     Int   @default(1)
+  credibilityScore  Int   @default(0)
+  clusterConfidence Float @default(1.0)
+  isFlagged         Boolean @default(false)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  // relations
+  createdById String?
+  createdBy   User?   @relation("CreatedIncidents", fields: [createdById], references: [id])
 
   reports        Report[]
   confirmations  Confirmation[]
   timelineEvents TimelineEvent[]
   assignments    Assignment[]
+
+  @@index([createdAt(sort: Desc), id(sort: Desc)])   // cursor pagination
+  @@index([status, category])                         // filter queries
+  @@index([credibilityScore(sort: Desc)])             // sort by score
+  @@index([searchVector], type: Gin)
 }
 
 model Report {
-  id          String   @id @default(uuid())
-  incidentId  String
-  incident    Incident @relation(fields: [incidentId], references: [id])
+  id         String   @id @default(uuid())
+  incidentId String
+  incident   Incident @relation(fields: [incidentId], references: [id])
+
   reportedById String
-  reportedBy   User     @relation(fields: [reportedById], references: [id])
+  reportedBy   User   @relation(fields: [reportedById], references: [id])
 
   description String
   photoUrls   Json?
@@ -87,14 +103,15 @@ model Report {
 }
 
 model Confirmation {
-  id         String           @id @default(uuid())
+  id         String   @id @default(uuid())
   incidentId String
-  incident   Incident         @relation(fields: [incidentId], references: [id])
-  userId     String
-  user       User             @relation(fields: [userId], references: [id])
-  type       ConfirmationType
+  incident   Incident @relation(fields: [incidentId], references: [id])
 
-  createdAt DateTime @default(now())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  type      ConfirmationType
+  createdAt DateTime         @default(now())
 
   @@unique([incidentId, userId])
 }
@@ -103,24 +120,41 @@ model TimelineEvent {
   id         String   @id @default(uuid())
   incidentId String
   incident   Incident @relation(fields: [incidentId], references: [id])
-  actorId    String
-  actor      User     @relation(fields: [actorId], references: [id])
+
+  actorId String
+  actor   User   @relation(fields: [actorId], references: [id])
 
   eventType  String
   fromStatus IncidentStatus?
   toStatus   IncidentStatus?
   meta       Json?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime        @default(now())
 
-  @@index([incidentId, createdAt])
+  @@index([incidentId, createdAt(sort: Desc)])        // timeline pagination
 }
 
 model Assignment {
   id         String   @id @default(uuid())
   incidentId String
   incident   Incident @relation(fields: [incidentId], references: [id])
+
   teamName   String
   assignedBy String
   active     Boolean  @default(true)
   assignedAt DateTime @default(now())
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  type       String    // STATUS_CHANGE | REPORT_ADDED | CONFIRMATION
+  title      String
+  body       String
+  incidentId String?
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, readAt])
 }

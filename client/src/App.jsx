@@ -1,12 +1,20 @@
 import React from "react";
-import { Routes, Route, Link, useNavigate } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 import Register from "./pages/Register.jsx";
 import Login from "./pages/Login.jsx";
 import Feed from "./pages/Feed.jsx";
 import Incident from "./pages/Incident.jsx";
+import Profile from "./pages/Profile.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import MapView from "./pages/MapView.jsx";
 import { tokenStore } from "./api.js";
+import { useAuth } from "./auth.jsx";
+import { ErrorProvider } from "./context/ErrorContext.jsx";
+import { ErrorBoundary } from "./components/ErrorBoundary.jsx";
+import { SocketProvider } from "./context/SocketContext.jsx";
+import NotificationBell from "./components/NotificationBell.jsx";
 
 function NavLink({ to, children }) {
   return (
@@ -19,13 +27,26 @@ function NavLink({ to, children }) {
   );
 }
 
+function RequireRole({ roles, children }) {
+  const { user } = useAuth();
+  if (!user || !roles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
 export default function App() {
   const nav = useNavigate();
+  const { user } = useAuth();
   const loggedIn = Boolean(tokenStore.access);
+  const isAdminOrMod = user && ["MODERATOR", "ADMIN"].includes(user.role);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900">
-      <Toaster position="top-right" toastOptions={{ duration: 2500 }} />
+    <ErrorProvider>
+      <SocketProvider>
+        <ErrorBoundary>
+          <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900">
+          <Toaster position="top-right" toastOptions={{ duration: 2500 }} />
 
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur">
@@ -42,9 +63,17 @@ export default function App() {
 
           <nav className="ml-auto flex items-center gap-5">
             <NavLink to="/">Feed</NavLink>
+            <NavLink to="/map">Map</NavLink>
+            {isAdminOrMod && <NavLink to="/admin">Admin</NavLink>}
             {!loggedIn && <NavLink to="/login">Login</NavLink>}
             {!loggedIn && <NavLink to="/register">Register</NavLink>}
           </nav>
+
+          {loggedIn && (
+            <div className="ml-2">
+              <NotificationBell />
+            </div>
+          )}
 
           <div className="ml-2">
             {loggedIn ? (
@@ -74,10 +103,52 @@ export default function App() {
       {/* Main */}
       <main className="mx-auto max-w-6xl px-4 py-8">
         <Routes>
-          <Route path="/" element={<Feed />} />
-          <Route path="/incident/:id" element={<Incident />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={
+            <ErrorBoundary fallback={(err, reset) => (
+              <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+                <p className="text-slate-500 text-sm mb-4">
+                  The feed failed to load.
+                </p>
+                <button onClick={reset} className="text-sm text-blue-600 underline">
+                  Retry
+                </button>
+              </div>
+            )}>
+              <Feed />
+            </ErrorBoundary>
+          } />
+          <Route path="/incident/:id" element={
+            <ErrorBoundary>
+              <Incident />
+            </ErrorBoundary>
+          } />
+          <Route path="/register" element={
+            <ErrorBoundary>
+              <Register />
+            </ErrorBoundary>
+          } />
+          <Route path="/login" element={
+            <ErrorBoundary>
+              <Login />
+            </ErrorBoundary>
+          } />
+          <Route path="/users/:userId" element={
+            <ErrorBoundary>
+              <Profile />
+            </ErrorBoundary>
+          } />
+          <Route path="/admin" element={
+            <ErrorBoundary>
+              <RequireRole roles={["MODERATOR", "ADMIN"]}>
+                <AdminDashboard />
+              </RequireRole>
+            </ErrorBoundary>
+          } />
+          <Route path="/map" element={
+            <ErrorBoundary>
+              <MapView />
+            </ErrorBoundary>
+          } />
         </Routes>
       </main>
 
@@ -93,5 +164,8 @@ export default function App() {
         </div>
       </footer>
     </div>
+        </ErrorBoundary>
+      </SocketProvider>
+    </ErrorProvider>
   );
 }

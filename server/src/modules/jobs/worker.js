@@ -1,12 +1,15 @@
 import { Worker } from "bullmq";
 import { redis } from "../../config/redis.js";
-import { recalculateScores } from "./scoring.js";
+import { recalculateScores, updateUserTrustScore } from "./scoring.js";
 
 const worker = new Worker(
   "incidentQueue",
   async (job) => {
     if (job.name === "recalculateScores") {
       await recalculateScores(job.data.incidentId);
+      if (job.data.userId) {
+        await updateUserTrustScore(job.data.userId);
+      }
     }
   },
   { connection: redis }

@@ -8,32 +8,60 @@ export const tokenStore = {
   clear() { localStorage.removeItem("accessToken"); localStorage.removeItem("refreshToken"); }
 };
 
-async function request(path, { method = "GET", body, auth = false } = {}) {
-  const headers = { "Content-Type": "application/json" };
-  if (auth && tokenStore.access) headers.Authorization = `Bearer ${tokenStore.access}`;
+// Normalised error — every failed API call throws one of these
+export class ApiError extends Error {
+  constructor(message, status, code) {
+    super(message);
+    this.name   = 'ApiError';
+    this.status = status;   // HTTP status: 401, 404, 422, 500 …
+    this.code   = code;     // Optional machine-readable code from your server
+  }
+}
 
-  const res = await fetch(`${API}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined
+async function request(path, options = {}) {
+  const token = tokenStore.access;
+  const fullPath = path.startsWith("/api") ? path : `/api${path}`;
+
+  const res = await fetch(`${API}${fullPath}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
   });
 
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || "Request failed");
-  return data;
+  // Attempt to parse a JSON body regardless of status
+  let body = null;
+  try {
+    body = await res.json();
+  } catch {
+    // Non-JSON response (e.g. 502 from a proxy)
+  }
+
+  if (!res.ok) {
+    const message = body?.message || `Request failed (${res.status})`;
+    const code    = body?.code    || null;
+    throw new ApiError(message, res.status, code);
+  }
+
+  return body;
 }
 
 export const api = {
-  register: (payload) => request("/api/auth/register", { method: "POST", body: payload }),
-  login: (payload) => request("/api/auth/login", { method: "POST", body: payload }),
-  refresh: (payload) => request("/api/auth/refresh", { method: "POST", body: payload }),
+  get:    (path, opts)         => request(path, { method: "GET", ...opts }),
+  post:   (path, data, opts)   => request(path, { method: "POST",
+                                   body: JSON.stringify(data), ...opts }),
+  patch:  (path, data, opts)   => request(path, { method: "PATCH",
+                                   body: JSON.stringify(data), ...opts }),
+  delete: (path, opts)         => request(path, { method: "DELETE", ...opts }),
 
-  listIncidents: () => request("/api/incidents"),
-  getIncident: (id) => request(`/api/incidents/${id}`),
-
-  createIncident: (payload) =>
-    request("/api/incidents", { method: "POST", body: payload, auth: true }),
-
-  confirmIncident: (id, type) =>
-    request(`/api/incidents/${id}/confirm`, { method: "POST", body: { type }, auth: true })
+  // Backward compatibility methods
+  register: (payload) => api.post("/auth/register", payload),
+  login: (payload) => api.post("/auth/login", payload),
+  refresh: (payload) => api.post("/auth/refresh", payload),
+  listIncidents: () => api.get("/incidents"),
+  getIncident: (id) => api.get(`/incidents/${id}`),
+  createIncident: (payload) => api.post("/incidents", payload),
+  confirmIncident: (id, type) => api.post(`/incidents/${id}/confirm`, { type })
 };
