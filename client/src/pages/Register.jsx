@@ -58,6 +58,7 @@ export default function Register() {
                 const res = await api.register(form);
                 tokenStore.access = res.accessToken;
                 tokenStore.refresh = res.refreshToken;
+                localStorage.setItem("userName", res.user.name);
                 toast.success("Account created!", { id: "reg" });
                 nav("/");
               } catch (e) {

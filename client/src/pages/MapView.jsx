@@ -104,7 +104,7 @@ export default function MapView() {
   ];
 
   return (
-    <div className="flex flex-col h-[650px] bg-slate-50 rounded-2xl overflow-hidden border border-slate-200/80 shadow-md">
+    <div className="flex flex-col flex-1 h-[calc(100dvh-3.5rem-4rem-env(safe-area-inset-bottom))] sm:h-[650px] bg-slate-50 sm:rounded-2xl overflow-hidden sm:border border-slate-200/80 sm:shadow-md">
 
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-4 py-3 bg-white

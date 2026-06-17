@@ -7,11 +7,49 @@ import { EmptyState } from "../components/EmptyState.jsx";
 import { IncidentDetailSkeleton } from "../components/Skeletons.jsx";
 import { InlineBoundary } from "../components/ErrorBoundary.jsx";
 import { useSocket } from "../context/SocketContext.jsx";
+import { useAuth } from "../auth.jsx";
 
 export default function Incident() {
   const { id } = useParams();
   const { showSuccess, handleError } = useError();
+  const { user } = useAuth();
   const [voting, setVoting] = useState(false);
+
+  const castVote = async (type) => {
+    if (!navigator.geolocation) {
+      handleError(new Error("Geolocation is not supported by your browser. Location verification is required to vote."));
+      return;
+    }
+
+    setVoting(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          await api.confirmIncident(id, type, latitude, longitude);
+          showSuccess(type === 'CONFIRM' ? "Thanks for confirming this issue." : "Your dispute has been recorded.");
+          await reload();
+        } catch (e) {
+          handleError(e);
+        } finally {
+          setVoting(false);
+        }
+      },
+      (error) => {
+        let message = "Please allow location access to confirm or dispute incidents.";
+        if (error.code === error.PERMISSION_DENIED) {
+          message = "Location permission denied. CivicPulse requires location verification within 500m to vote.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = "Location information is unavailable.";
+        } else if (error.code === error.TIMEOUT) {
+          message = "Location request timed out. Please try again.";
+        }
+        handleError(new Error(message));
+        setVoting(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   const {
     data: resData,
@@ -78,6 +116,8 @@ export default function Incident() {
   if (!incident) return null;
 
   const canVote = Boolean(tokenStore.access);
+  const userConfirmations = incident?.confirmations || [];
+  const hasVoted = user && userConfirmations.some(c => c.userId === user.id);
 
   return (
     <div className="space-y-6">
@@ -85,14 +125,14 @@ export default function Incident() {
         <Link to="/" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition">
           ← Back to Feed
         </Link>
-        <span className="text-xs px-2 py-1 rounded-full border border-slate-200 bg-slate-50">
+        <span className="text-xs px-2 py-1 rounded-full border border-slate-200 bg-slate-50 font-semibold">
           {incident.status}
         </span>
       </div>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
         <h1 className="text-2xl font-semibold tracking-tight">{incident.title}</h1>
-        <p className="text-slate-500 mt-1">
+        <p className="text-slate-500 mt-1 font-medium">
           {incident.category}
           {incident.createdBy && (
             <>
@@ -105,7 +145,7 @@ export default function Incident() {
           )}
         </p>
 
-        <p className="mt-4 text-slate-700 text-sm sm:text-base leading-relaxed bg-slate-50/50 border border-slate-100 rounded-2xl p-4">
+        <p className="mt-4 text-slate-700 text-sm sm:text-base leading-relaxed bg-slate-50/50 border border-slate-100 rounded-2xl p-4 font-medium">
           {incident.description}
         </p>
 
@@ -116,51 +156,62 @@ export default function Incident() {
         </div>
 
         <InlineBoundary label="Voting section failed to load.">
-          <div className="mt-5 flex flex-wrap gap-3">
-            <button
-              disabled={!canVote || voting}
-              onClick={async () => {
-                setVoting(true);
-                try {
-                  await api.confirmIncident(id, "CONFIRM");
-                  showSuccess("Thanks for confirming this issue.");
-                  await reload();
-                } catch (e) {
-                  handleError(e);
-                } finally {
-                  setVoting(false);
-                }
-              }}
-              className="rounded-2xl px-4 py-2 text-sm font-medium bg-slate-900 text-white
-              shadow-sm hover:opacity-90 transition disabled:opacity-50"
-            >
-              Confirm
-            </button>
+          {canVote && (
+            <>
+              {/* Mobile vote bar — fixed to bottom, above the nav */}
+              <div className="sm:hidden fixed bottom-[calc(4rem+env(safe-area-inset-bottom))]
+                              inset-x-0 px-4 py-2 bg-white/95 backdrop-blur-md
+                              border-t border-slate-100 z-30 flex gap-3 shadow-md">
+                <button
+                  onClick={() => castVote('CONFIRM')}
+                  disabled={voting || hasVoted}
+                  className="flex-1 py-2.5 rounded-xl bg-green-50 text-green-700
+                             text-sm font-semibold active:bg-green-100
+                             disabled:opacity-50 transition-colors"
+                >
+                  ✓ Confirm
+                </button>
+                <button
+                  onClick={() => castVote('DISPUTE')}
+                  disabled={voting || hasVoted}
+                  className="flex-1 py-2.5 rounded-xl bg-red-50 text-red-700
+                             text-sm font-semibold active:bg-red-100
+                             disabled:opacity-50 transition-colors"
+                >
+                  ✗ Dispute
+                </button>
+              </div>
 
-            <button
-              disabled={!canVote || voting}
-              onClick={async () => {
-                setVoting(true);
-                try {
-                  await api.confirmIncident(id, "DISPUTE");
-                  showSuccess("Your dispute has been recorded.");
-                  await reload();
-                } catch (e) {
-                  handleError(e);
-                } finally {
-                  setVoting(false);
-                }
-              }}
-              className="rounded-2xl px-4 py-2 text-sm font-medium border border-slate-200 bg-white
-              hover:bg-slate-50 transition shadow-sm disabled:opacity-50"
-            >
-              Dispute
-            </button>
+              {/* Desktop vote buttons — shown inline, not fixed */}
+              <div className="hidden sm:flex gap-3 mt-5">
+                <button
+                  disabled={voting || hasVoted}
+                  onClick={() => castVote('CONFIRM')}
+                  className="rounded-2xl px-4 py-2 text-sm font-semibold bg-slate-950 text-white
+                  shadow-sm hover:opacity-90 transition disabled:opacity-50"
+                >
+                  Confirm
+                </button>
+                <button
+                  disabled={voting || hasVoted}
+                  onClick={() => castVote('DISPUTE')}
+                  className="rounded-2xl px-4 py-2 text-sm font-semibold border border-slate-200 bg-white
+                  hover:bg-slate-50 transition shadow-sm disabled:opacity-50"
+                >
+                  Dispute
+                </button>
+                {hasVoted && (
+                  <span className="text-xs text-slate-500 self-center font-semibold">
+                    Your response has been recorded
+                  </span>
+                )}
+              </div>
+            </>
+          )}
 
-            {!canVote && (
-              <p className="text-sm text-slate-500 self-center">Login to confirm/dispute.</p>
-            )}
-          </div>
+          {!canVote && (
+            <p className="text-sm text-slate-500 mt-5 font-semibold">Login to confirm/dispute.</p>
+          )}
         </InlineBoundary>
       </section>
 

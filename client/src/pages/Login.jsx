@@ -47,6 +47,7 @@ export default function Login() {
                 const res = await api.login(form);
                 tokenStore.access = res.accessToken;
                 tokenStore.refresh = res.refreshToken;
+                localStorage.setItem("userName", res.user.name);
                 toast.success("Logged in!", { id: "login" });
                 nav("/");
               } catch (e) {

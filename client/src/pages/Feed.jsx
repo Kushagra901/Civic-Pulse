@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate }    from 'react-router-dom';
 import toast                    from 'react-hot-toast';
 import { api, tokenStore }      from '../api.js';
-import LocationPicker           from '../components/LocationPicker.jsx';
-import PhotoUploader             from '../components/PhotoUploader.jsx';
 import { SearchBar }            from '../components/SearchBar.jsx';
 import { useIncidentSearch }    from '../hooks/useIncidentSearch.js';
 import { useLeafletMap }        from '../hooks/useLeafletMap.js';
@@ -24,7 +22,37 @@ const CATEGORY_EMOJI = {
   WATER:'💧', ELECTRICITY:'⚡', ROAD:'🛣️', SAFETY:'🚨', SANITATION:'🗑️', OTHER: '📍'
 };
 
-const categories = ["ROAD", "WATER", "ELECTRICITY", "SAFETY", "SANITATION", "OTHER"];
+function usePullToRefresh(onRefresh) {
+  const startYRef    = useRef(null);
+  const [pulling,    setPulling]    = useState(false);
+  const [pullDist,   setPullDist]   = useState(0);
+  const THRESHOLD    = 80;   // px to pull before triggering
+
+  const onTouchStart = useCallback((e) => {
+    // Only trigger if we're at the top of the page
+    if (window.scrollY === 0) {
+      startYRef.current = e.touches[0].clientY;
+    }
+  }, []);
+
+  const onTouchMove = useCallback((e) => {
+    if (startYRef.current === null) return;
+    const dist = e.touches[0].clientY - startYRef.current;
+    if (dist > 0 && dist < THRESHOLD * 1.5) {
+      setPullDist(dist);
+      setPulling(dist >= THRESHOLD);
+    }
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    if (pulling) onRefresh();
+    startYRef.current = null;
+    setPulling(false);
+    setPullDist(0);
+  }, [pulling, onRefresh]);
+
+  return { onTouchStart, onTouchMove, onTouchEnd, pullDist, pulling };
+}
 
 export default function Feed() {
   const navigate  = useNavigate();
@@ -43,16 +71,6 @@ export default function Feed() {
     incidents, loading, loadingMore,
     hasNextPage, error, fetchMore, refresh
   } = useIncidentSearch({ ...filters, bbox });
-
-  const [form, setForm] = useState({
-    title: "",
-    category: "ROAD",
-    description: "",
-    location: { lat: 28.6139, lng: 77.209, label: "New Delhi (default)" },
-    photoUrls: []
-  });
-
-  const loggedIn = Boolean(tokenStore.access);
 
   // ── Map setup ───────────────────────────────────────────────
   const mapContainerRef = useRef(null);
@@ -103,31 +121,28 @@ export default function Feed() {
     return () => observer.disconnect();
   }, [fetchMore, view]);
 
-  async function submit() {
-    if (!loggedIn) return toast.error("Please login first");
-    if (!form.title.trim()) return toast.error("Title required");
-    if (!form.description.trim()) return toast.error("Description required");
-
-    toast.loading("Submitting report...", { id: "submit" });
-    try {
-      await api.createIncident({
-        title: form.title,
-        category: form.category,
-        description: form.description,
-        lat: form.location.lat,
-        lng: form.location.lng,
-        photoUrls: form.photoUrls
-      });
-      toast.success("Report submitted!", { id: "submit" });
-      setForm((p) => ({ ...p, title: "", description: "", photoUrls: [] }));
-      await refresh();
-    } catch (e) {
-      toast.error(e.message, { id: "submit" });
-    }
-  }
+  const { onTouchStart, onTouchMove, onTouchEnd, pullDist, pulling } = usePullToRefresh(refresh);
 
   return (
-    <div className="space-y-6">
+    <div
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      className="space-y-6 min-h-[calc(100dvh-3.5rem-4rem)]"
+    >
+      {/* Pull indicator */}
+      {pullDist > 10 && (
+        <div className="flex justify-center py-2 transition-all"
+             style={{ height: `${Math.min(pullDist * 0.5, 40)}px` }}>
+          <div className={`w-6 h-6 border-2 border-blue-500 rounded-full
+                           transition-transform
+                           ${pulling
+                             ? 'border-t-transparent animate-spin'
+                             : ''}`}
+               style={{ transform: `rotate(${pullDist * 2}deg)` }}
+          />
+        </div>
+      )}
       {/* Hero */}
       <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -147,84 +162,7 @@ export default function Feed() {
         </div>
       </section>
 
-      {/* Create + Location Grid */}
-      <section className="grid lg:grid-cols-2 gap-6">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Report an issue</h2>
-            <span className="text-xs text-slate-500 font-semibold">{loggedIn ? "Logged in" : "Login required"}</span>
-          </div>
-
-          {!loggedIn ? (
-            <div className="mt-3 rounded-2xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600 font-medium">
-              Please login to create an incident.
-            </div>
-          ) : (
-            <div className="mt-4 space-y-4">
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">Title</span>
-                <input
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none
-                  focus:ring-2 focus:ring-slate-900/10 transition text-sm font-medium"
-                  placeholder="e.g., Garbage overflow near hostel gate"
-                  value={form.title}
-                  onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">Category</span>
-                <select
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 bg-white outline-none
-                  focus:ring-2 focus:ring-slate-900/10 transition text-sm font-medium"
-                  value={form.category}
-                  onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-                >
-                  {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">Description</span>
-                <textarea
-                  className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none
-                  focus:ring-2 focus:ring-slate-900/10 transition min-h-[120px] text-sm font-medium"
-                  placeholder="Add details: where, since when, how severe."
-                  value={form.description}
-                  onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-semibold text-slate-700">Photos (optional)</span>
-                <div className="mt-1">
-                  <PhotoUploader
-                    key={form.photoUrls.length === 0 ? 'reset' : 'active'}
-                    onChange={(urls) => setForm((p) => ({ ...p, photoUrls: urls }))}
-                  />
-                </div>
-              </label>
-
-              <button
-                onClick={submit}
-                className="w-full rounded-2xl bg-slate-900 text-white py-3 font-semibold shadow-sm
-                hover:opacity-90 transition text-sm"
-              >
-                Submit report
-              </button>
-
-              <p className="text-xs text-slate-500 font-medium">
-                Duplicate reports within ~250m auto-cluster into one incident.
-              </p>
-            </div>
-          )}
-        </div>
-
-        <LocationPicker
-          value={form.location}
-          onChange={(loc) => setForm((p) => ({ ...p, location: { ...p.location, ...loc } }))}
-        />
-      </section>
+      {/* Location Picker and form logic moved to separate reporting wizard page */}
 
       {/* Incidents feed section */}
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">

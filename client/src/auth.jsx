@@ -20,7 +20,8 @@ export function getUserFromToken() {
   const token = tokenStore.access;
   const payload = getPayload(token);
   if (!payload) return null;
-  return { id: payload.sub, role: payload.role };
+  const name = localStorage.getItem("userName") || "";
+  return { id: payload.sub, role: payload.role, name };
 }
 
 export function useAuth() {

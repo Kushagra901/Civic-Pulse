@@ -17,7 +17,7 @@ export const requireAuth = async (req, res, next) => {
   const user = await prisma.user.findUnique({ where: { id: decoded.sub } });
   if (!user) throw new ApiError(401, "User not found");
 
-  req.user = { id: user.id, role: user.role, email: user.email, name: user.name };
+  req.user = { id: user.id, role: user.role, email: user.email, name: user.name, isBanned: user.isBanned };
   next();
 };
 
@@ -45,7 +45,7 @@ export const authenticate = ({ optional = false } = {}) => {
         throw new ApiError(401, "User not found");
       }
 
-      req.user = { id: user.id, role: user.role, email: user.email, name: user.name };
+      req.user = { id: user.id, role: user.role, email: user.email, name: user.name, isBanned: user.isBanned };
       next();
     } catch (error) {
       next(error);

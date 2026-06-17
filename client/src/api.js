@@ -5,7 +5,11 @@ export const tokenStore = {
   set access(v) { localStorage.setItem("accessToken", v); },
   get refresh() { return localStorage.getItem("refreshToken"); },
   set refresh(v) { localStorage.setItem("refreshToken", v); },
-  clear() { localStorage.removeItem("accessToken"); localStorage.removeItem("refreshToken"); }
+  clear() {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("userName");
+  }
 };
 
 // Normalised error — every failed API call throws one of these
@@ -63,5 +67,5 @@ export const api = {
   listIncidents: () => api.get("/incidents"),
   getIncident: (id) => api.get(`/incidents/${id}`),
   createIncident: (payload) => api.post("/incidents", payload),
-  confirmIncident: (id, type) => api.post(`/incidents/${id}/confirm`, { type })
+  confirmIncident: (id, type, lat, lng) => api.post(`/incidents/${id}/confirm`, { type, lat, lng })
 };

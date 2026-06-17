@@ -13,6 +13,36 @@ export async function updateUserTrustScore(userId) {
     }),
   ]);
 
+  // Check dispute rate on incidents reported by this user to auto-ban
+  const userReports = await prisma.report.findMany({
+    where: { reportedById: userId },
+    select: { incidentId: true }
+  });
+  const incidentIds = [...new Set(userReports.map(r => r.incidentId))];
+
+  let shouldBan = false;
+  if (incidentIds.length > 0) {
+    const votes = await prisma.confirmation.groupBy({
+      by: ['type'],
+      where: {
+        incidentId: { in: incidentIds }
+      },
+      _count: { id: true }
+    });
+
+    const confirmVotes = votes.find(v => v.type === 'CONFIRM')?._count.id || 0;
+    const disputeVotes = votes.find(v => v.type === 'DISPUTE')?._count.id || 0;
+    const totalVotes = confirmVotes + disputeVotes;
+
+    if (totalVotes >= 10) {
+      const disputeRate = disputeVotes / totalVotes;
+      if (disputeRate > 0.8) {
+        shouldBan = true;
+        console.warn(`[Auto-Ban] User ${userId} marked for ban. Dispute rate: ${(disputeRate * 100).toFixed(1)}% (${disputeVotes}/${totalVotes})`);
+      }
+    }
+  }
+
   // Formula:
   // +1 per report filed
   // +3 per resolved report (quality signal)
@@ -25,11 +55,14 @@ export async function updateUserTrustScore(userId) {
     confirmations * 1 -
     disputes * 2;
 
-  const trustScore = Math.max(0, raw);
+  const trustScore = shouldBan ? 0 : Math.max(0, raw);
 
   await prisma.user.update({
     where: { id: userId },
-    data: { trustScore },
+    data: { 
+      trustScore,
+      ...(shouldBan && { isBanned: true })
+    },
   });
 
   return trustScore;

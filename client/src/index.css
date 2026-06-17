@@ -29,3 +29,31 @@ mark {
   border-radius: 2px;
   padding: 0 1px;
 }
+
+/* Prevent horizontal scroll on mobile */
+html, body {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Minimum tap target size — 44px is Apple's HIG recommendation */
+button, a, [role="button"] {
+  min-height: 44px;
+  min-width:  44px;
+}
+
+/* Smooth momentum scrolling on iOS */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* Remove tap highlight on mobile — use :active styles instead */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent font size bump when rotating on iOS */
+@media screen and (orientation: landscape) {
+  html { -webkit-text-size-adjust: none; }
+}

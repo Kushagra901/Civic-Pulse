@@ -4,9 +4,29 @@ import { prisma } from "../../config/prisma.js";
 import * as service from "./incidents.service.js";
 import { emitToArea, emitToIncident, emitToUser } from "../realtime/socket.js";
 import { persistNotification } from "../realtime/notifications.service.js";
+import { redis } from "../../config/redis.js";
+import { sanitiseCoordinates } from "../../utils/sanitise.js";
 
 export const createIncident = asyncHandler(async (req, res) => {
   const { title, category, description, lat, lng, photoUrls } = req.validated.body;
+
+  // Enforce a 5-minute report submission cooldown per user via Redis
+  const cooldownKey = `cooldown:report:${req.user.id}`;
+  let hasCooldown = false;
+  let ttl = 300;
+  try {
+    const val = await redis.get(cooldownKey);
+    if (val) {
+      hasCooldown = true;
+      ttl = await redis.ttl(cooldownKey);
+    }
+  } catch (err) {
+    console.error(`[Cooldown Check] Redis error: ${err.message}. Failing open.`);
+  }
+
+  if (hasCooldown) {
+    throw new ApiError(429, `Please wait ${ttl} seconds before submitting another report.`);
+  }
 
   // Validate that URLs actually point to your Cloudinary account
   // (prevents users submitting arbitrary URLs)
@@ -19,15 +39,25 @@ export const createIncident = asyncHandler(async (req, res) => {
     }
   }
 
+  // Sanitise and round coordinates
+  const { lat: cleanLat, lng: cleanLng } = sanitiseCoordinates(lat, lng);
+
   const incident = await service.createOrAttachIncident({
     userId: req.user.id,
     title,
     category,
     description,
-    lat,
-    lng,
+    lat: cleanLat,
+    lng: cleanLng,
     photoUrls
   });
+
+  // Set report cooldown in Redis
+  try {
+    await redis.setex(cooldownKey, 300, '1');
+  } catch (err) {
+    console.error(`[Cooldown Set] Redis error: ${err.message}`);
+  }
 
   const { isNew, report } = incident;
 
@@ -252,12 +282,35 @@ export const changeStatus = asyncHandler(async (req, res) => {
 });
 
 export const confirm = asyncHandler(async (req, res) => {
-  const { type } = req.validated.body;
-  await service.confirmIncident({ id: req.params.id, userId: req.user.id, type });
+  // Silently discard votes (return 200 success) for shadow-banned users
+  if (req.user?.isBanned) {
+    console.warn(`[Shadow-Ban] User ${req.user.id} attempted to confirm/dispute incident ${req.params.id} but is banned. Discarding vote silently.`);
+    return res.json({ success: true });
+  }
+
+  const { type, lat, lng } = req.validated.body;
+  const id = req.params.id;
+
+  // Proximity check: enforce 500m radius check using ST_DWithin PostGIS query
+  const proximityMatch = await prisma.$queryRaw`
+    SELECT id FROM "Incident"
+    WHERE id = ${id}::uuid
+      AND ST_DWithin(
+        location,
+        ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326),
+        500
+      )
+  `;
+
+  if (!proximityMatch || proximityMatch.length === 0) {
+    throw new ApiError(400, "You must be within 500 meters of the incident location to confirm or dispute it.");
+  }
+
+  await service.confirmIncident({ id, userId: req.user.id, type });
 
   // Fetch updated votes and score from database to emit
   const updatedIncident = await prisma.incident.findUnique({
-    where: { id: req.params.id },
+    where: { id },
     select: {
       credibilityScore: true,
       confirmations: {
@@ -272,8 +325,8 @@ export const confirm = asyncHandler(async (req, res) => {
     const confirms = updatedIncident.confirmations.filter(c => c.type === "CONFIRM").length;
     const disputes = updatedIncident.confirmations.filter(c => c.type === "DISPUTE").length;
 
-    emitToIncident(req.params.id, "incident:score_updated", {
-      incidentId:       req.params.id,
+    emitToIncident(id, "incident:score_updated", {
+      incidentId:       id,
       credibilityScore: updatedIncident.credibilityScore,
       confirms,
       disputes,

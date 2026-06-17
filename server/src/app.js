@@ -16,9 +16,62 @@ import notificationRoutes from "./modules/realtime/notifications.routes.js";
 export const createApp = () => {
   const app = express();
 
-  app.use(helmet());
-  app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
-  app.use(express.json({ limit: "1mb" }));
+  // Prevent path traversal attacks
+  app.use((req, res, next) => {
+    try {
+      const decodedPath = decodeURIComponent(req.path);
+      if (
+        decodedPath.includes("..") ||
+        req.path.includes("..") ||
+        req.path.includes("%2e%2e") ||
+        req.path.includes("%2E%2E")
+      ) {
+        return res.status(400).json({ success: false, message: "Invalid request path" });
+      }
+    } catch (err) {
+      return res.status(400).json({ success: false, message: "Malformed request URI" });
+    }
+    next();
+  });
+
+  // Strict Helmet headers with Content Security Policy
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https://res.cloudinary.com"],
+        connectSrc: ["'self'", "ws:", "wss:"],
+        frameAncestors: ["'none'"]
+      }
+    },
+    frameguard: { action: "deny" },
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" }
+  }));
+
+  // Parse CORS allowed origins list
+  const allowedOrigins = (env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
+  app.use(cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, postman, or curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true
+  }));
+
+  // Restrict JSON body size to 50kb to prevent buffer flooding
+  app.use(express.json({ limit: "50kb" }));
   app.use(cookieParser());
   app.use(morgan("dev"));
 

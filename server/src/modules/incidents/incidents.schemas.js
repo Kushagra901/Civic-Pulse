@@ -1,13 +1,14 @@
 import { z } from "zod";
+import { sanitiseText, sanitiseRichText, sanitisePhotoUrls } from "../../utils/sanitise.js";
 
 export const createIncidentSchema = z.object({
   body: z.object({
-    title: z.string().min(5),
-    category: z.string().min(3),
-    description: z.string().min(5).optional(),
-    lat: z.number(),
-    lng: z.number(),
-    photoUrls: z.array(z.string().url()).max(5, 'Maximum 5 photos per report').default([])
+    title: z.string().transform(val => sanitiseText(val)).refine(val => val.length >= 5, { message: "Title must be at least 5 characters after cleaning" }),
+    category: z.string().transform(val => sanitiseText(val)).refine(val => val.length >= 3, { message: "Category must be at least 3 characters after cleaning" }),
+    description: z.string().optional().transform(val => val ? sanitiseRichText(val) : undefined).refine(val => !val || val.length >= 5, { message: "Description must be at least 5 characters after cleaning" }),
+    lat: z.coerce.number().min(-90).max(90),
+    lng: z.coerce.number().min(-180).max(180),
+    photoUrls: z.array(z.string().url()).max(5, 'Maximum 5 photos per report').default([]).transform((urls) => sanitisePhotoUrls(urls, process.env.CLOUDINARY_CLOUD_NAME))
   })
 });
 
@@ -55,7 +56,9 @@ export const changeStatusSchema = z.object({
 
 export const confirmSchema = z.object({
   body: z.object({
-    type: z.enum(["CONFIRM", "DISPUTE"])
+    type: z.enum(["CONFIRM", "DISPUTE"]),
+    lat: z.coerce.number().min(-90).max(90),
+    lng: z.coerce.number().min(-180).max(180)
   }),
   params: z.object({
     id: z.string().uuid()

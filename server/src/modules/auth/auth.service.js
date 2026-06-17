@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../config/prisma.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { signAccessToken, signRefreshToken, verifyRefresh } from "../../config/jwt.js";
+import { recordLoginFailure, clearLoginFailures, isAccountLocked } from "../../middleware/accountLockout.js";
 
 export const register = async ({ name, email, password }) => {
   const exists = await prisma.user.findUnique({ where: { email } });
@@ -21,11 +22,21 @@ export const register = async ({ name, email, password }) => {
 };
 
 export const login = async ({ email, password }) => {
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) throw new ApiError(401, "Invalid credentials");
+  // Check lockout BEFORE hitting the database
+  const lockout = await isAccountLocked(email);
+  if (lockout.locked) {
+    const mins = Math.ceil(lockout.retryAfterSecs / 60);
+    throw new ApiError(429, `Account temporarily locked. Try again in ${mins} minutes.`);
+  }
 
-  const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok) throw new ApiError(401, "Invalid credentials");
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user || !await bcrypt.compare(password, user.passwordHash)) {
+    await recordLoginFailure(email);
+    throw new ApiError(401, "Invalid email or password.");
+  }
+
+  // Successful login — clear lockout record
+  await clearLoginFailures(email);
 
   const accessToken = signAccessToken({ sub: user.id, role: user.role });
   const refreshToken = signRefreshToken({ sub: user.id });
