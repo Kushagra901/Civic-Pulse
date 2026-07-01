@@ -64,6 +64,29 @@ export default function Layout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [darkMode, setDarkMode] = React.useState(
+    () => localStorage.getItem("theme") === "dark"
+  );
+  const [motionReduce, setMotionReduce] = React.useState(false);
+
+  React.useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
+
+  React.useEffect(() => {
+    if (motionReduce) {
+      document.documentElement.classList.add("motion-reduce");
+    } else {
+      document.documentElement.classList.remove("motion-reduce");
+    }
+  }, [motionReduce]);
+
   // Pages that use full-screen map should hide the top bar's shadow
   const isMapPage = location.pathname === '/map';
 
@@ -76,22 +99,29 @@ export default function Layout({ children }) {
   if (isLanding) return <>{children}</>;
 
   return (
-    // min-h-dvh uses dynamic viewport height — correct on mobile browsers
-    // where the address bar collapses
-    <div className="flex flex-col min-h-[100dvh] bg-gray-50 text-slate-900">
+    <div className="flex flex-col min-h-[100dvh] bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
 
       {/* ── Top bar (desktop + mobile) ─────────────────────── */}
-      <header className={`sticky top-0 z-40 bg-white border-b border-gray-200
+      <header className={`sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 border-b border-slate-100 dark:border-slate-800 backdrop-blur-md
                           ${isMapPage ? '' : 'shadow-sm'}`}>
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center gap-3">
 
           {/* Logo */}
-          <NavLink to="/" className="flex items-center gap-2 font-semibold text-gray-900 text-base tracking-tight">
-            <div className="h-8 w-8 rounded-lg bg-slate-950 text-white grid place-items-center shadow-sm">
-              <span className="text-xs font-bold">CP</span>
+          <NavLink to="/" className="flex items-center gap-2.5 font-bold text-slate-900 text-lg tracking-tight">
+            <div className="h-9 w-9 rounded-xl bg-blue-600 text-white grid place-items-center shadow-md shadow-blue-500/10 transition-transform hover:scale-105">
+              <span className="text-sm font-extrabold">CP</span>
             </div>
             <span>Civic<span className="text-blue-600">Pulse</span></span>
           </NavLink>
+
+          {/* Location Selector (Mock) */}
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200/60 text-xs font-semibold text-slate-600 cursor-pointer hover:bg-slate-100 hover:border-slate-300 transition-all ml-4">
+            <span className="text-blue-600 font-semibold">📍</span>
+            <span>New Delhi, Central Ward</span>
+            <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
 
           {/* Desktop nav — hidden on mobile */}
           <nav className="hidden sm:flex items-center gap-1 ml-6">
@@ -100,43 +130,65 @@ export default function Layout({ children }) {
             {user && <DesktopNavLink to="/incidents/new" label="Report Issue" />}
             {user?.role &&
               ['MODERATOR','ADMIN'].includes(user.role) && (
-              <DesktopNavLink to="/admin" label="Admin" />
+              <DesktopNavLink to="/admin" label="Admin Dashboard" />
             )}
           </nav>
 
           <div className="flex-1" />
+
+          {/* Theme & Accessibility Toggles */}
+          <div className="flex items-center gap-1.5 mr-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200/50 dark:border-slate-700/50">
+            <button
+              onClick={() => setMotionReduce(r => !r)}
+              title={motionReduce ? "Enable Animations" : "Reduce Motion"}
+              className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-all min-h-0 min-w-0
+                ${motionReduce 
+                  ? 'bg-amber-500 text-white shadow-sm' 
+                  : 'text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}
+            >
+              🏃‍♂️
+            </button>
+            
+            <button
+              onClick={() => setDarkMode(d => !d)}
+              title="Toggle Dark Mode"
+              className="w-7 h-7 rounded-lg flex items-center justify-center text-sm text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all min-h-0 min-w-0"
+            >
+              {darkMode ? '☀️' : '🌙'}
+            </button>
+          </div>
 
           {/* Right side — always visible */}
           {user
             ? <div className="flex items-center gap-3">
                 <NotificationBell />
                 <NavLink to={`/users/${user.id}`}
-                  className="hidden sm:flex w-8 h-8 rounded-full bg-blue-100
-                             text-blue-800 text-xs font-medium items-center
-                             justify-center hover:bg-blue-200 transition-colors">
-                  {user.name?.charAt(0).toUpperCase() || 'U'}
+                  className="flex w-9 h-9 rounded-xl bg-blue-50
+                             text-blue-600 text-xs font-bold items-center
+                             justify-center hover:bg-blue-100 hover:text-blue-700 border border-blue-100 transition-all">
+                  {user.name?.slice(0, 2).toUpperCase() || 'CP'}
                 </NavLink>
                 <button
                   onClick={handleLogout}
-                  className="hidden sm:inline-flex items-center justify-center rounded-xl px-3 py-1.5 text-xs font-medium
-                  bg-slate-900 text-white shadow-sm hover:opacity-90 transition-opacity"
+                  className="hidden sm:inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs font-bold
+                  bg-slate-900 text-white shadow-sm hover:bg-slate-800 transition-colors"
                 >
                   Logout
                 </button>
               </div>
             : <div className="flex items-center gap-2">
                 <NavLink to="/login"
-                  className="hidden sm:block text-sm text-slate-600 hover:text-slate-900 font-medium px-3 py-1.5">
+                  className="hidden sm:block text-sm text-slate-600 hover:text-slate-900 font-semibold px-3 py-1.5 transition-colors">
                   Sign in
                 </NavLink>
                 <NavLink to="/login"
-                  className="sm:hidden text-xs text-blue-600 hover:text-blue-700 font-semibold border border-blue-200 px-3 py-1.5 rounded-xl">
+                  className="sm:hidden text-xs text-blue-600 hover:text-blue-700 font-bold border border-blue-200 px-3 py-1.5 rounded-xl transition-colors">
                   Sign in
                 </NavLink>
                 <button
                   onClick={() => navigate('/login')}
-                  className="hidden sm:inline-flex items-center justify-center rounded-xl px-3 py-1.5 text-sm font-medium
-                  bg-slate-900 text-white shadow-sm hover:opacity-90 transition-opacity"
+                  className="hidden sm:inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs font-bold
+                  bg-blue-600 text-white shadow-md shadow-blue-500/10 hover:bg-blue-700 transition-all hover:scale-[1.02]"
                 >
                   Get Started
                 </button>
@@ -144,6 +196,19 @@ export default function Layout({ children }) {
           }
         </div>
       </header>
+
+      {/* ── Live Alert Banner ── */}
+      {!isMapPage && (
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white text-xs font-medium py-2.5 px-4 flex items-center shadow-sm relative z-30 animate-in slide-in-from-top duration-300">
+          <div className="max-w-6xl mx-auto w-full flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="bg-white/20 text-white px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wider uppercase animate-pulse">Urgent Announcement</span>
+              <span>⚡ Scheduled water pressure optimization in Central Ward (Sectors 3, 4, and 5) tomorrow between 6:00 AM - 9:00 AM.</span>
+            </div>
+            <button className="text-white/70 hover:text-white font-bold text-xs p-1 min-h-0 min-w-0" onClick={(e) => e.target.parentElement.parentElement.remove()}>✕</button>
+          </div>
+        </div>
+      )}
 
       {/* ── Page content ───────────────────────────────────── */}
       {/* pb-[calc(4rem+env(safe-area-inset-bottom))] reserves space
@@ -156,14 +221,64 @@ export default function Layout({ children }) {
 
       {/* Footer - only shown on desktop & non-map pages */}
       {!isMapPage && (
-        <footer className="border-t border-slate-200 bg-white hidden sm:block">
-          <div className="mx-auto max-w-6xl px-4 py-6 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-            <p className="text-sm text-slate-500">
-              © {new Date().getFullYear()} CivicPulse • Built for social impact
-            </p>
-            <p className="text-xs text-slate-500">
-              Tip: Confirm issues near you to increase credibility.
-            </p>
+        <footer className="border-t border-slate-200 bg-white">
+          <div className="mx-auto max-w-6xl px-4 py-12">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="space-y-4">
+                <span className="font-bold text-slate-900 text-lg flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-md bg-blue-600 text-white grid place-items-center shadow-sm text-xs font-extrabold">CP</div>
+                  CivicPulse
+                </span>
+                <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                  A high-credibility, evidence-based civic tech platform connecting citizens with municipal transparency and direct resolution action.
+                </p>
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-[10px] font-bold text-slate-600">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Smart City Node v2.6
+                  </span>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">Civic Resources</h4>
+                <ul className="space-y-2.5 text-xs text-slate-500 font-medium">
+                  <li><NavLink to="/map" className="hover:text-blue-600 transition-colors">Smart City Live Map</NavLink></li>
+                  <li><a href="#" className="hover:text-blue-600 transition-colors">Ward Grievance Redressal</a></li>
+                  <li><a href="#" className="hover:text-blue-600 transition-colors">Local Sanitation Schedule</a></li>
+                  <li><a href="#" className="hover:text-blue-600 transition-colors">City Council Archives</a></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">Citizens</h4>
+                <ul className="space-y-2.5 text-xs text-slate-500 font-medium">
+                  <li><NavLink to={user ? `/users/${user.id}` : "/login"} className="hover:text-blue-600 transition-colors">Citizen Dashboard</NavLink></li>
+                  <li><a href="#" className="hover:text-blue-600 transition-colors">Streaks & Badges</a></li>
+                  <li><a href="#" className="hover:text-blue-600 transition-colors">Voice-Assist Input Mode</a></li>
+                  <li><a href="#" className="hover:text-blue-600 transition-colors">Accessibility Guidelines</a></li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">Help & Support</h4>
+                <p className="text-xs text-slate-500 leading-relaxed mb-3 font-medium">
+                  Need immediate municipal support? Contact your ward helpline.
+                </p>
+                <div className="text-xs font-bold text-blue-600 bg-blue-50/50 border border-blue-100 rounded-xl p-3 inline-block w-full text-center">
+                  📞 Central Emergency: 1800-CIVIC-SOS
+                </div>
+              </div>
+            </div>
+            <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-slate-400 font-medium">
+                © {new Date().getFullYear()} CivicPulse • Empowering communities through accountability.
+              </p>
+              <div className="flex gap-4 text-xs font-semibold text-slate-400">
+                <a href="#" className="hover:text-slate-600 transition-colors">Accessibility Mode</a>
+                <span>·</span>
+                <a href="#" className="hover:text-slate-600 transition-colors">Privacy Policy</a>
+                <span>·</span>
+                <a href="#" className="hover:text-slate-600 transition-colors">Terms of Service</a>
+              </div>
+            </div>
           </div>
         </footer>
       )}

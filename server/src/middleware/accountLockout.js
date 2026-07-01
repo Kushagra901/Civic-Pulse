@@ -1,9 +1,10 @@
 import { redis } from '../config/redis.js';
+import { env } from '../config/env.js';
 
 const LOCKOUT_CONFIG = {
-  maxFailures:   5,
+  maxFailures:   env.AUTH_MAX_FAILURES,
   windowSecs:    15 * 60,   // 15 min window
-  lockoutSecs:   30 * 60,   // 30 min lockout after max failures
+  lockoutSecs:   env.ACCOUNT_LOCKOUT_SECS,   // lockout after max failures
   longLockoutAt: 10,        // failures before 24h lockout
   longLockoutSecs: 24 * 60 * 60,
 };

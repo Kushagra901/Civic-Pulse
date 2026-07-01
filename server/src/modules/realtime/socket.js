@@ -2,13 +2,10 @@ import { Server } from "socket.io";
 import { verifyAccess } from "../../config/jwt.js";
 import { prisma } from "../../config/prisma.js";
 import { env } from "../../config/env.js";
+import logger from "../../config/logger.js";
 
-const log = {
-  info: (...args) => console.log("[INFO] [SOCKET]", ...args),
-  error: (...args) => console.error("[ERROR] [SOCKET]", ...args),
-  debug: (...args) => console.log("[DEBUG] [SOCKET]", ...args),
-  child: () => log
-};
+const log = logger.child({ module: "socket" });
+
 
 let io = null;   // module-level singleton — imported by route handlers
 
@@ -43,8 +40,9 @@ export function initSocket(httpServer) {
   });
 
   io.on("connection", (socket) => {
-    const { id: userId, role } = socket.user;
-    log.info(`Socket connected for user ${userId}, socket ID: ${socket.id}`);
+    const { id: userId } = socket.user;
+    const log_socket = log.child({ userId, socketId: socket.id });
+    log_socket.info("Socket connected");
 
     // Always join the personal room on connect
     socket.join(`user:${userId}`);
@@ -53,9 +51,15 @@ export function initSocket(httpServer) {
 
     // Client joins when they open an incident detail page
     socket.on("subscribe:incident", (incidentId) => {
-      if (typeof incidentId !== "string") return;
-      socket.join(`incident:${incidentId}`);
-      log.debug(`User ${userId} subscribed to incident room incident:${incidentId}`);
+      try {
+        if (typeof incidentId !== "string") {
+          throw new Error("Invalid incidentId type");
+        }
+        socket.join(`incident:${incidentId}`);
+        log_socket.debug({ incidentId }, "Subscribed to incident room");
+      } catch (err) {
+        log_socket.warn({ err, incidentId }, "subscribe:incident failed");
+      }
     });
 
     socket.on("unsubscribe:incident", (incidentId) => {
@@ -64,18 +68,34 @@ export function initSocket(httpServer) {
 
     // Client joins when they grant location or select an area
     socket.on("subscribe:area", (areaCode) => {
-      if (typeof areaCode !== "string") return;
-      socket.join(`area:${areaCode}`);
-      log.debug(`User ${userId} subscribed to area room area:${areaCode}`);
+      try {
+        if (typeof areaCode !== "string") {
+          throw new Error("Invalid areaCode type");
+        }
+        socket.join(`area:${areaCode}`);
+        log_socket.debug({ areaCode }, "Subscribed to area room");
+      } catch (err) {
+        log_socket.warn({ err, areaCode }, "subscribe:area failed");
+      }
     });
 
     socket.on("unsubscribe:area", (areaCode) => {
       socket.leave(`area:${areaCode}`);
     });
 
-    socket.on("disconnect", (reason) => {
-      log.info(`Socket disconnected for user ${userId}, reason: ${reason}`);
+    // Socket.io's own error event — fires on transport-level issues
+    socket.on("error", (err) => {
+      log_socket.error({ err }, "Socket error");
     });
+
+    socket.on("disconnect", (reason) => {
+      log_socket.info({ reason }, "Socket disconnected");
+    });
+  });
+
+  // Server-level connection errors — auth failures land here too
+  io.on("connect_error", (err) => {
+    log.warn({ err }, "Socket connection rejected");
   });
 
   log.info("Socket.io initialised");

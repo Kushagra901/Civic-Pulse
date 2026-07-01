@@ -1,4 +1,6 @@
 import { prisma } from "../../config/prisma.js";
+import { invalidatePrefix } from "../../utils/cache.js";
+
 
 export async function updateUserTrustScore(userId) {
   const [reports, confirmations, disputes, resolvedCount] = await Promise.all([
@@ -94,6 +96,14 @@ export const recalculateScores = async (incidentId) => {
   await prisma.incident.update({
     where: { id: incidentId },
     data: { credibilityScore, severityScore }
+  });
+
+  // Invalidate caches that could now be stale
+  await Promise.all([
+    invalidatePrefix('heatmap:'),
+    invalidatePrefix('search:'),
+  ]).catch(err => {
+    console.error('Failed to invalidate prefixes in scoring:', err.message);
   });
 
   // Automatically update trust scores of users involved in this incident

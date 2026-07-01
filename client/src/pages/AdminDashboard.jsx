@@ -71,30 +71,26 @@ export default function AdminDashboard() {
   useEffect(() => { fetchMetrics(); }, [fetchMetrics]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-slate-50 pb-12">
+      <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-medium text-gray-900">
-              Admin dashboard
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-4">
+          <div className="space-y-1">
+            <h1 className="text-xl font-bold text-slate-800 uppercase tracking-wider">
+              Control Panel & Moderation
             </h1>
-            <p className="text-sm text-gray-400 mt-0.5">
-              Moderate incidents and manage platform health
+            <p className="text-xs text-slate-400 font-semibold">
+              Triage user complaints, assign maintenance crews, and track platform metrics
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="segmented">
             {['queue', 'metrics'].map(t => (
               <button key={t}
                 onClick={() => setTab(t)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                  ${tab === t
-                    ? 'bg-white border border-gray-200 text-gray-900 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                className={`segmented-btn uppercase tracking-wider ${tab === t ? 'segmented-btn-active' : ''}`}
               >
-                {t === 'queue' ? 'Triage queue' : 'Metrics'}
+                {t === 'queue' ? 'Triage Queue' : 'Analytics'}
               </button>
             ))}
           </div>
@@ -128,43 +124,44 @@ function MetricsPanel({ metrics }) {
   const maxCat = Math.max(...(byCategory || []).map(c => c.count), 1);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 animate-in fade-in duration-300">
 
       {/* Overview stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="Total incidents"  value={overview.totalIncidents} />
-        <StatCard label="Open"             value={overview.openIncidents}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <StatCard label="Total complaints"  value={overview.totalIncidents} />
+        <StatCard label="Active / Open"       value={overview.openIncidents}
                   variant="warning" />
         <StatCard label="Resolved (7d)"    value={overview.resolvedLast7d}
                   variant="success" />
-        <StatCard label="New (24h)"        value={overview.newLast24h} />
-        <StatCard label="Total users"      value={overview.totalUsers} />
-        <StatCard label="New users (7d)"   value={overview.newUsersLast7d}
+        <StatCard label="New alerts (24h)"   value={overview.newLast24h}
                   variant="info" />
-        <StatCard label="Avg resolution"
+        <StatCard label="Total Users"       value={overview.totalUsers} />
+        <StatCard label="Registered (7d)"   value={overview.newUsersLast7d}
+                  variant="info" />
+        <StatCard label="Avg Resolution"
                   value={overview.avgResolutionHours != null
-                    ? `${overview.avgResolutionHours}h` : 'N/A'} />
+                    ? `${overview.avgResolutionHours}h` : 'N/A'}
+                  variant="success" />
       </div>
 
       {/* By category */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5">
-        <h2 className="text-sm font-medium text-gray-700 mb-4">
-          Incidents by category
+      <div className="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
+        <h2 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">
+          Incidents by Ward Category
         </h2>
-        <div className="space-y-3">
+        <div className="space-y-4 pt-1">
           {byCategory?.map(({ category, count }) => (
-            <div key={category} className="flex items-center gap-3">
-              <span className="text-xs text-gray-500 w-24 flex-shrink-0">
+            <div key={category} className="flex items-center gap-4">
+              <span className="text-xs font-bold text-slate-600 w-24 flex-shrink-0">
                 {CATEGORY_LABELS[category] || category}
               </span>
-              <div className="flex-1 bg-gray-100 rounded-full h-2">
+              <div className="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
                 <div
-                  className="bg-blue-500 h-2 rounded-full transition-all"
+                  className="bg-blue-600 h-full rounded-full transition-all duration-500"
                   style={{ width: `${(count / maxCat) * 100}%` }}
                 />
               </div>
-              <span className="text-xs font-medium text-gray-700 w-8
-                               text-right flex-shrink-0">
+              <span className="text-xs font-extrabold text-slate-800 w-8 text-right flex-shrink-0">
                 {count}
               </span>
             </div>
@@ -173,20 +170,20 @@ function MetricsPanel({ metrics }) {
       </div>
 
       {/* By status */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5">
-        <h2 className="text-sm font-medium text-gray-700 mb-4">
-          Pipeline breakdown
+      <div className="bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4">
+        <h2 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">
+          Resolution Pipeline Breakdown
         </h2>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5 pt-1">
           {STATUS_ORDER.map(status => {
             const found = byStatus?.find(s => s.status === status);
             const count = found?.count ?? 0;
             return (
               <div key={status}
-                className={`px-3 py-2 rounded-xl text-center min-w-[80px]
-                  ${STATUS_STYLES[status]}`}>
-                <p className="text-lg font-medium">{count}</p>
-                <p className="text-xs mt-0.5 opacity-75">
+                className={`px-4 py-3.5 rounded-xl text-center min-w-[100px] border shadow-sm flex-1
+                  ${STATUS_STYLES[status] || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                <p className="text-2xl font-extrabold font-display leading-tight">{count}</p>
+                <p className="text-[9px] font-bold mt-1.5 uppercase tracking-wider opacity-75">
                   {status.replace('_', ' ')}
                 </p>
               </div>
@@ -494,17 +491,17 @@ function IncidentRow({ incident, onRefresh }) {
 
 function StatCard({ label, value, variant }) {
   const variants = {
-    success: 'text-green-700',
-    warning: 'text-amber-700',
-    info:    'text-blue-700',
-    default: 'text-gray-800',
+    success: 'text-emerald-700 bg-emerald-50/50 border-emerald-150',
+    warning: 'text-amber-700 bg-amber-50/50 border-amber-150',
+    info:    'text-blue-700 bg-blue-50/50 border-blue-150',
+    default: 'text-slate-900 bg-white border-slate-200/60',
   };
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
-      <p className={`text-2xl font-medium ${variants[variant] || variants.default}`}>
+    <div className={`rounded-2xl p-4 border transition-all hover:shadow-sm ${variants[variant] || variants.default}`}>
+      <p className="text-2xl font-extrabold font-display leading-tight">
         {value}
       </p>
-      <p className="text-xs text-gray-400 mt-1">{label}</p>
+      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">{label}</p>
     </div>
   );
 }

@@ -25,7 +25,7 @@ export function SocketProvider({ children }) {
       return;
     }
 
-    const socket = io(import.meta.env.VITE_API_URL || "http://localhost:8080", {
+    const socket = io(import.meta.env.VITE_SOCKET_URL || "", {
       auth:              { token: accessToken },
       reconnectionDelay: 1000,
       reconnectionDelayMax: 10000,

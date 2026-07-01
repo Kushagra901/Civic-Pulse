@@ -1,0 +1,17 @@
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+
+# But DO commit the example file
+!.env.example
+
+# Prisma generates this — contains connection string in some setups
+prisma/.env
+
+# Node
+node_modules/
+dist/
+build/

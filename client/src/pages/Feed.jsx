@@ -9,13 +9,13 @@ import { EmptyState }           from '../components/EmptyState.jsx';
 import { IncidentCardSkeleton } from '../components/Skeletons.jsx';
 
 const STATUS_STYLES = {
-  REPORTED:    'bg-slate-100 text-slate-600 border-slate-200/50',
-  TRIAGED:     'bg-amber-100 text-amber-700 border-amber-200/50',
-  ASSIGNED:    'bg-blue-100 text-blue-700 border-blue-200/50',
-  IN_PROGRESS: 'bg-indigo-100 text-indigo-700 border-indigo-200/50',
-  RESOLVED:    'bg-green-100 text-green-700 border-green-200/50',
-  VERIFIED:    'bg-emerald-100 text-emerald-700 border-emerald-200/50',
-  CLOSED:      'bg-slate-100 text-slate-500 border-slate-200/50',
+  REPORTED:    'bg-slate-50 text-slate-600 border-slate-200',
+  TRIAGED:     'bg-amber-50 text-amber-700 border-amber-200',
+  ASSIGNED:    'bg-blue-50 text-blue-700 border-blue-200',
+  IN_PROGRESS: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  RESOLVED:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+  VERIFIED:    'bg-teal-50 text-teal-700 border-teal-200',
+  CLOSED:      'bg-slate-50 text-slate-500 border-slate-200',
 };
 
 const CATEGORY_EMOJI = {
@@ -29,7 +29,6 @@ function usePullToRefresh(onRefresh) {
   const THRESHOLD    = 80;   // px to pull before triggering
 
   const onTouchStart = useCallback((e) => {
-    // Only trigger if we're at the top of the page
     if (window.scrollY === 0) {
       startYRef.current = e.touches[0].clientY;
     }
@@ -64,7 +63,6 @@ export default function Feed() {
     sortBy:   'recent',
   });
 
-  // Map viewport bbox — set when user pans the map
   const [bbox, setBbox] = useState(null);
 
   const {
@@ -72,7 +70,6 @@ export default function Feed() {
     hasNextPage, error, fetchMore, refresh
   } = useIncidentSearch({ ...filters, bbox });
 
-  // ── Map setup ───────────────────────────────────────────────
   const mapContainerRef = useRef(null);
   const viewportTimer   = useRef(null);
 
@@ -87,7 +84,6 @@ export default function Feed() {
     onMapMove: handleMapMove,
   });
 
-  // Re-render cluster markers whenever search results change
   useEffect(() => {
     if (view !== 'map') return;
     const withCoords = incidents
@@ -101,14 +97,12 @@ export default function Feed() {
     setClusterData(withCoords, (inc) => navigate(`/incident/${inc.id}`));
   }, [incidents, view, setClusterData, navigate]);
 
-  // Reset bbox when switching back to list view
   useEffect(() => {
     if (view === 'list') {
       setBbox(null);
     }
   }, [view]);
 
-  // ── Infinite scroll sentinel ────────────────────────────────
   const sentinelRef = useRef(null);
 
   useEffect(() => {
@@ -128,7 +122,7 @@ export default function Feed() {
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      className="space-y-6 min-h-[calc(100dvh-3.5rem-4rem)]"
+      className="space-y-6 min-h-[calc(100dvh-4rem)] pb-12"
     >
       {/* Pull indicator */}
       {pullDist > 10 && (
@@ -143,34 +137,48 @@ export default function Feed() {
           />
         </div>
       )}
-      {/* Hero */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Community Issues Feed</h1>
-            <p className="text-slate-500 mt-2 max-w-2xl font-medium">
-              Report civic problems, confirm nearby incidents, and track resolution timelines with credibility-based ranking.
+
+      {/* Hero / Header Page */}
+      <section className="bg-white border-b border-slate-200/80 py-8 px-4 sm:px-6 shadow-sm">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Ward Monitoring</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 font-display">Grievances & Reports Feed</h1>
+            <p className="text-slate-500 text-xs sm:text-sm max-w-xl font-medium leading-relaxed">
+              Verify local community signals, report street issues, and follow direct resolution pathways tracked by credibility rank.
             </p>
           </div>
-          <button
-            onClick={refresh}
-            className="inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold
-            border border-slate-200 bg-white hover:bg-slate-50 transition shadow-sm"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={refresh}
+              className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs font-bold
+              border border-slate-200 bg-white hover:bg-slate-50 transition shadow-sm text-slate-700"
+            >
+              🔄 Refresh Data
+            </button>
+            <Link
+              to="/incidents/new"
+              className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs font-bold
+              bg-blue-600 text-white hover:bg-blue-700 transition shadow-md shadow-blue-500/10 hover:scale-[1.02]"
+            >
+              ➕ Report Issue
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* Location Picker and form logic moved to separate reporting wizard page */}
-
       {/* Incidents feed section */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Top incidents</h2>
-          <span className="text-xs text-slate-500 font-semibold">
-            {loading ? "Loading..." : `${incidents.length} items`}
-          </span>
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Community Indicators</h2>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-400 font-bold">
+              {loading ? "Syncing..." : `${incidents.length} incidents found`}
+            </span>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -182,19 +190,14 @@ export default function Feed() {
         />
 
         {/* View Toggle */}
-        <div className="flex bg-slate-100 rounded-xl p-1 w-fit gap-1">
+        <div className="segmented">
           {[
-            { key: 'list', label: '☰ List' },
-            { key: 'map',  label: '🗺 Map'  },
+            { key: 'list', label: '☰ List View' },
+            { key: 'map',  label: '🗺 Map View'  },
           ].map(({ key, label }) => (
             <button key={key}
               onClick={() => setView(key)}
-              className={`px-4 py-1.5 rounded-lg text-sm font-semibold
-                transition-all
-                ${view === key
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-                }`}
+              className={`segmented-btn ${view === key ? 'segmented-btn-active' : ''}`}
             >
               {label}
             </button>
@@ -327,9 +330,7 @@ function IncidentCard({ incident, highlight }) {
 
   return (
     <Link to={`/incident/${incident.id}`}
-      className="block bg-white border border-slate-200 rounded-2xl
-                 overflow-hidden hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5
-                 transition-all shadow-sm">
+      className="incident-card">
       <div className="flex flex-col h-full justify-between">
         <div className="flex gap-4 p-4">
           {/* Thumbnail */}

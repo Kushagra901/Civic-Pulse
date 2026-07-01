@@ -47,6 +47,8 @@ model User {
   confirmations    Confirmation[]
   timelineEvents   TimelineEvent[]
   notifications    Notification[]
+
+  @@index([trustScore(sort: Desc)])
 }
 
 model Incident {
@@ -81,6 +83,8 @@ model Incident {
   @@index([createdAt(sort: Desc), id(sort: Desc)])   // cursor pagination
   @@index([status, category])                         // filter queries
   @@index([credibilityScore(sort: Desc)])             // sort by score
+  @@index([severityScore(sort: Desc)])                // sort by severity
+  @@index([isFlagged])                                // flagged moderation queue
   @@index([searchVector], type: Gin)
 }
 
@@ -100,6 +104,7 @@ model Report {
   createdAt DateTime @default(now())
 
   @@index([incidentId, createdAt])
+  @@index([reportedById, createdAt(sort: Desc)])
 }
 
 model Confirmation {
@@ -114,6 +119,7 @@ model Confirmation {
   createdAt DateTime         @default(now())
 
   @@unique([incidentId, userId])
+  @@index([userId, type])
 }
 
 model TimelineEvent {
@@ -142,6 +148,8 @@ model Assignment {
   assignedBy String
   active     Boolean  @default(true)
   assignedAt DateTime @default(now())
+
+  @@index([incidentId, active])
 }
 
 model Notification {

@@ -47,10 +47,10 @@ incidentsRouter.get('/stats/public', asyncHandler(async (req, res) => {
     prisma.incident.findMany({
       where:   { status: { in: ['RESOLVED', 'VERIFIED', 'CLOSED'] } },
       take:    5,
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { createdAt: 'desc' },
       select:  {
         id: true, title: true, category: true,
-        status: true, updatedAt: true,
+        status: true, createdAt: true,
         reports: {
           take: 1,
           select: { photoUrls: true, lat: true, lng: true },

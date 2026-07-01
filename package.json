@@ -1,0 +1,20 @@
+{
+  "name": "civicpulse-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CivicPulse Root Orchestrator",
+  "scripts": {
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "db:up": "docker compose -f server/docker-compose.yml up -d",
+    "db:down": "docker compose -f server/docker-compose.yml down",
+    "db:migrate": "cd server && npx prisma generate && npx prisma migrate dev",
+    "start:server": "cd server && npm run dev",
+    "start:worker": "cd server && npm run worker",
+    "start:client": "cd client && npm run dev",
+    "dev": "concurrently -n \"api,worker,web\" -c \"blue,magenta,cyan\" --kill-others \"npm run start:server\" \"npm run start:worker\" \"npm run start:client\"",
+    "start": "npm run db:up && npm run db:migrate && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

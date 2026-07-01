@@ -4,7 +4,11 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { env } from "./config/env.js";
-import { errorHandler } from "./middleware/error.js";
+import { errorHandler, notFoundHandler } from "./middleware/error.js";
+import { prisma } from "./config/prisma.js";
+import { redis } from "./config/redis.js";
+import healthRoutes from "./modules/health/health.routes.js";
+
 
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { incidentsRouter } from "./modules/incidents/incidents.routes.js";
@@ -57,6 +61,11 @@ export const createApp = () => {
     .map(origin => origin.trim())
     .filter(Boolean);
 
+  if (env.NODE_ENV === "production" && allowedOrigins.some(origin => origin.includes("localhost"))) {
+    console.error("❌ ALLOWED_ORIGINS contains localhost in production — fix this");
+    process.exit(1);
+  }
+
   app.use(cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps, postman, or curl)
@@ -76,7 +85,10 @@ export const createApp = () => {
   app.use(morgan("dev"));
 
   app.get("/", (req, res) => res.json({ message: "Civic Pulse API v1" }));
-  app.get("/health", (req, res) => res.json({ ok: true }));
+
+  // Mount health check routes
+  app.use("/api", healthRoutes);
+  app.use("/", healthRoutes);
 
   app.use("/api/auth", authRouter);
   app.use("/api/incidents", incidentsRouter);
@@ -85,6 +97,7 @@ export const createApp = () => {
   app.use("/api/admin", adminRoutes);
   app.use("/api/notifications", notificationRoutes);
 
+  app.use(notFoundHandler);
   app.use(errorHandler);
   return app;
 };

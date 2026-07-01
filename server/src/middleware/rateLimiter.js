@@ -16,6 +16,11 @@ export function createRateLimiter({
     const now      = Date.now();
     const windowMs = windowSecs * 1000;
 
+    if (redis.status !== "ready") {
+      console.warn(`[RateLimiter] Redis is not ready (status: ${redis.status}). Failing open.`);
+      return next();
+    }
+
     try {
       const pipeline = redis.pipeline();
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { sanitiseText, sanitiseRichText, sanitisePhotoUrls } from "../../utils/sanitise.js";
+import { env } from "../../config/env.js";
 
 export const createIncidentSchema = z.object({
   body: z.object({
@@ -8,7 +9,7 @@ export const createIncidentSchema = z.object({
     description: z.string().optional().transform(val => val ? sanitiseRichText(val) : undefined).refine(val => !val || val.length >= 5, { message: "Description must be at least 5 characters after cleaning" }),
     lat: z.coerce.number().min(-90).max(90),
     lng: z.coerce.number().min(-180).max(180),
-    photoUrls: z.array(z.string().url()).max(5, 'Maximum 5 photos per report').default([]).transform((urls) => sanitisePhotoUrls(urls, process.env.CLOUDINARY_CLOUD_NAME))
+    photoUrls: z.array(z.string().url()).max(5, 'Maximum 5 photos per report').default([]).transform((urls) => sanitisePhotoUrls(urls, env.CLOUDINARY_CLOUD_NAME))
   })
 });
 
@@ -20,7 +21,7 @@ export const listIncidentsSchema = z.object({
     category: z.string().optional(),
     bbox: z.string().optional(),
     near: z.string().optional(),
-    limit: z.coerce.number().min(1).max(50).default(20)
+    limit: z.coerce.number().min(1).max(200).default(20)
   })
 });
 

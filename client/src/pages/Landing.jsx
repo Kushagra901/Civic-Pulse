@@ -80,26 +80,24 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-50">
 
       {/* ── Nav ──────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-md
-                      border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14
-                        flex items-center justify-between">
-          <span className="font-semibold text-gray-900 text-base">
-            Civic<span className="text-blue-600">Pulse</span>
+      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-100 h-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between">
+          <span className="font-bold text-slate-900 text-lg flex items-center gap-2">
+            <div className="h-9 w-9 rounded-xl bg-blue-600 text-white grid place-items-center shadow-md shadow-blue-500/10">
+              <span className="text-sm font-extrabold">CP</span>
+            </div>
+            <span>Civic<span className="text-blue-600">Pulse</span></span>
           </span>
           <div className="flex items-center gap-3">
             <Link to="/login"
-              className="text-sm text-gray-500 hover:text-gray-800
-                         transition-colors px-3 py-2">
+              className="text-sm text-slate-500 hover:text-slate-900 transition-colors px-3.5 py-2 font-semibold">
               Sign in
             </Link>
             <Link to="/register"
-              className="text-sm bg-blue-600 text-white px-4 py-2
-                         rounded-xl hover:bg-blue-700 transition-colors
-                         font-semibold">
+              className="text-xs bg-blue-600 text-white px-4 py-2.5 rounded-xl hover:bg-blue-700 transition-all font-bold shadow-md shadow-blue-500/10 hover:scale-[1.02]">
               Get started
             </Link>
           </div>
@@ -107,61 +105,114 @@ export default function Landing() {
       </nav>
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6
-                          pt-16 pb-12 sm:pt-24 sm:pb-20">
-        <div className="max-w-2xl">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 pb-16 lg:pt-20 lg:pb-24">
+        <div className="grid lg:grid-cols-12 gap-12 items-center">
+          
+          {/* Left Column: Hero copy */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Social proof pill */}
+            {stats && stats.resolvedIncidents > 0 && (
+              <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs font-bold px-3.5 py-1.5 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {stats.resolvedIncidents} local issues resolved in your community
+              </div>
+            )}
 
-          {/* Social proof pill — shown once stats load */}
-          {stats && stats.resolvedIncidents > 0 && (
-            <div className="inline-flex items-center gap-2 bg-green-50
-                            border border-green-200 text-green-800
-                            text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500
-                               animate-pulse" />
-              {stats.resolvedIncidents} issues resolved in your community
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-[1.08] font-display">
+              Local problems,
+              <br />
+              <span className="text-signal bg-gradient-to-r from-signal to-blue-600 bg-clip-text text-transparent">publicly accountable.</span>
+            </h1>
+
+            <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 leading-relaxed max-w-xl font-medium">
+              CivicPulse turns scattered complaints into verified, prioritized incidents. We build trust through location verification, community signal matching, and a public audit trail that holds everyone accountable.
+            </p>
+
+            <div className="flex flex-wrap gap-3.5 pt-2">
+              <Link to="/register"
+                className="inline-flex items-center gap-2 bg-accent text-slate-900 px-6 py-3 rounded-xl text-sm font-bold hover:bg-accent-hover active:scale-[0.98] transition-all shadow-md shadow-accent/15 hover:scale-[1.02]">
+                Report an issue
+                <span aria-hidden="true">→</span>
+              </Link>
+              <Link to="/map"
+                className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 px-6 py-3 rounded-xl text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-850 active:scale-[0.98] transition-all hover:border-slate-350 dark:hover:border-slate-750">
+                View live map
+              </Link>
             </div>
-          )}
 
-          <h1 className="text-4xl sm:text-5xl font-semibold text-gray-900
-                         leading-tight tracking-tight">
-            Local problems,
-            <br />
-            <span className="text-blue-600">publicly accountable.</span>
-          </h1>
-
-          <p className="mt-5 text-lg text-gray-500 leading-relaxed max-w-xl font-medium">
-            CivicPulse turns scattered complaints into verified, prioritised
-            incidents — with a public audit trail that holds everyone accountable
-            from report to resolution.
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link to="/register"
-              className="inline-flex items-center gap-2 bg-blue-600 text-white
-                         px-6 py-3 rounded-xl text-sm font-semibold
-                         hover:bg-blue-700 active:scale-[0.98]
-                         transition-all shadow-sm shadow-blue-600/20">
-              Report an issue
-              <span aria-hidden="true">→</span>
-            </Link>
-            <Link to="/map"
-              className="inline-flex items-center gap-2 border border-gray-200
-                         text-gray-700 px-6 py-3 rounded-xl text-sm font-semibold
-                         hover:bg-gray-50 active:scale-[0.98] transition-all">
-              View live map
-            </Link>
+            {/* Trust Copy */}
+            <div className="flex items-center gap-4 text-xs font-bold text-slate-400 pt-3">
+              <span className="flex items-center gap-1">🛡️ No anonymous spam</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">📍 GPS-verified signals</span>
+            </div>
           </div>
 
-          {/* Micro-copy below CTA */}
-          <p className="mt-3 text-xs text-gray-400 font-semibold">
-            Free to use. No app download required.
-          </p>
+          {/* Right Column: Premium Smart City Dashboard / Map mockup */}
+          <div className="lg:col-span-5">
+            <div className="relative bg-white border border-slate-100 rounded-2xl shadow-xl p-6 space-y-4 animate-in fade-in duration-700">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                  <span className="text-[10px] font-extrabold text-slate-800 uppercase tracking-widest">Central Triage Monitor</span>
+                </div>
+                <span className="text-[9px] font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">DELHI ZONE II</span>
+              </div>
+              
+              {/* Mini stats */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
+                  <span className="text-2xl font-extrabold text-slate-900 font-display">94.8%</span>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">Resolution Rate</p>
+                </div>
+                <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3">
+                  <span className="text-2xl font-extrabold text-slate-900 font-display">12.5h</span>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">Avg Triage Speed</p>
+                </div>
+              </div>
+              
+              {/* Recent resolved signal */}
+              <div className="border border-slate-100 rounded-xl p-3.5 space-y-2 bg-gradient-to-tr from-slate-50/30 to-white">
+                <div className="flex justify-between items-center">
+                  <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-full">✓ RESOLVED IN WARD 12</span>
+                  <span className="text-[9px] font-semibold text-slate-400">12m ago</span>
+                </div>
+                <p className="text-xs font-bold text-slate-800">⚡ Damaged streetlight line reported & repaired at Rajpath crossing.</p>
+              </div>
+              
+              {/* Interactive map card */}
+              <div className="h-36 bg-slate-50 border border-slate-100 rounded-xl relative overflow-hidden flex items-center justify-center">
+                <div className="absolute inset-0 bg-hatch opacity-40"></div>
+                {/* Mock grid lines */}
+                <div className="absolute inset-0 flex flex-col justify-between opacity-5">
+                  <div className="h-px bg-slate-500 w-full"></div>
+                  <div className="h-px bg-slate-500 w-full"></div>
+                  <div className="h-px bg-slate-500 w-full"></div>
+                </div>
+                <div className="absolute inset-0 flex justify-between opacity-5">
+                  <div className="w-px bg-slate-500 h-full"></div>
+                  <div className="w-px bg-slate-500 h-full"></div>
+                  <div className="w-px bg-slate-500 h-full"></div>
+                </div>
+                
+                {/* Pins */}
+                <span className="absolute top-1/4 left-1/4 text-xl animate-bounce duration-1000">💧</span>
+                <span className="absolute bottom-1/4 right-1/4 text-xl animate-pulse">🛣️</span>
+                <span className="absolute top-1/2 right-1/3 text-lg opacity-30">🚨</span>
+                
+                <div className="absolute bottom-3 bg-white/95 backdrop-blur-sm border border-slate-200/60 rounded-xl py-1.5 px-3 shadow-md text-[10px] font-extrabold text-slate-700 flex items-center gap-1.5 z-10">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping"></span>
+                  <span>📍 Real-time Incident Heatmap Layer</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── Live stats ticker ─────────────────────────────────── */}
-      <section className="border-y border-gray-100 bg-gray-50/60">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <section className="border-y border-slate-100 bg-white/70 backdrop-blur-sm shadow-sm relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
           {statsLoading
             ? <StatsSkeleton />
             : stats
@@ -173,25 +224,23 @@ export default function Landing() {
 
       {/* ── Recently resolved — proof that it works ────────────── */}
       {stats?.recentlyResolved?.length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 sm:px-6 py-16 animate-in fade-in duration-300">
-          <div className="flex items-end justify-between mb-6">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 py-20 animate-in fade-in duration-300">
+          <div className="flex items-end justify-between mb-8">
             <div>
-              <p className="text-xs font-semibold text-blue-600 uppercase
-                            tracking-wider mb-1">
-                Proof it works
+              <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-1.5">
+                Proof of Impact
               </p>
-              <h2 className="text-2xl font-semibold text-gray-900">
-                Recently resolved
+              <h2 className="text-3xl font-extrabold text-slate-900 font-display tracking-tight">
+                Recently resolved reports
               </h2>
             </div>
             <Link to="/map"
-              className="text-sm text-blue-600 hover:text-blue-700
-                         transition-colors hidden sm:block font-semibold">
-              View live map →
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors hidden sm:block border-b border-blue-200 hover:border-blue-600 pb-0.5">
+              Explore Ward Map →
             </Link>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {stats.recentlyResolved.map(incident => (
               <ResolvedCard key={incident.id} incident={incident} />
             ))}
@@ -200,42 +249,39 @@ export default function Landing() {
       )}
 
       {/* ── How it works ──────────────────────────────────────── */}
-      <section className="bg-gray-50/60 border-y border-gray-100">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
-          <div className="text-center mb-12">
-            <p className="text-xs font-semibold text-blue-600 uppercase
-                          tracking-wider mb-2">
-              Process
+      <section className="bg-slate-50 border-t border-b border-slate-200/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
+          <div className="text-center mb-16">
+            <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-2.5">
+              Resolution Pipeline
             </p>
-            <h2 className="text-2xl font-semibold text-gray-900">
-              How CivicPulse works
+            <h2 className="text-3xl font-extrabold text-slate-900 font-display tracking-tight">
+              Community Reporting in 3 Steps
             </h2>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid sm:grid-cols-3 gap-8">
             {HOW_IT_WORKS.map((item, i) => (
               <div key={item.step}
-                className="relative bg-white rounded-2xl p-6
-                           border border-gray-200 shadow-sm">
+                className="relative bg-white rounded-2xl p-7 border border-slate-100 shadow-card hover:shadow-card-hover transition-all duration-300 flex flex-col justify-between">
                 {/* Connector line between steps — desktop only */}
                 {i < HOW_IT_WORKS.length - 1 && (
-                  <div className="hidden sm:block absolute top-10
-                                  -right-4 w-8 h-px bg-gray-200 z-10" />
+                  <div className="hidden lg:block absolute top-12 -right-4 w-8 h-px bg-slate-200 z-10" />
                 )}
-                <div className="w-10 h-10 rounded-xl bg-blue-50
-                                flex items-center justify-center
-                                text-xl mb-4">
-                  {item.emoji}
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-2xl mb-6 border border-blue-100/50">
+                    {item.emoji}
+                  </div>
+                  <p className="text-xs font-mono text-slate-400 mb-1.5 font-bold">
+                    STEP {item.step}
+                  </p>
+                  <h3 className="text-base font-bold text-slate-900 mb-2.5">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs text-slate-500 leading-relaxed font-semibold">
+                    {item.body}
+                  </p>
                 </div>
-                <p className="text-xs font-mono text-gray-400 mb-1 font-semibold">
-                  {item.step}
-                </p>
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-gray-500 leading-relaxed font-medium">
-                  {item.body}
-                </p>
               </div>
             ))}
           </div>
@@ -243,35 +289,31 @@ export default function Landing() {
       </section>
 
       {/* ── Trust signals ──────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
-        <div className="text-center mb-12">
-          <p className="text-xs font-semibold text-blue-600 uppercase
-                        tracking-wider mb-2">
-            Why it's different
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
+        <div className="text-center mb-16 space-y-3">
+          <p className="text-xs font-bold text-blue-600 uppercase tracking-widest">
+            Built for integrity
           </p>
-          <h2 className="text-2xl font-semibold text-gray-900">
-            Designed to prevent abuse
+          <h2 className="text-3xl font-extrabold text-slate-900 font-display tracking-tight">
+            Designed to prevent platform abuse
           </h2>
-          <p className="mt-3 text-gray-500 text-sm max-w-lg mx-auto font-medium">
-            Most reporting tools become spam dumps. CivicPulse is built
-            from the ground up to reward legitimate reporters and
-            surface real problems.
+          <p className="text-slate-500 text-xs sm:text-sm max-w-xl mx-auto font-semibold leading-relaxed">
+            Most reporting tools become dump yards of fake reports. CivicPulse rewards legitimate reporters, uses verified signal clusters, and assigns dynamic trust scoring.
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 gap-6">
           {TRUST_SIGNALS.map(signal => (
             <div key={signal.title}
-              className="flex gap-4 p-5 rounded-2xl bg-gray-50
-                         border border-gray-200">
-              <span className="text-2xl flex-shrink-0 mt-0.5" role="img">
+              className="flex gap-5 p-6 rounded-2xl bg-white border border-slate-100 shadow-card">
+              <span className="text-3xl flex-shrink-0 mt-0.5" role="img">
                 {signal.icon}
               </span>
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                <h3 className="text-sm font-bold text-slate-900 mb-2">
                   {signal.title}
                 </h3>
-                <p className="text-sm text-gray-500 leading-relaxed font-medium">
+                <p className="text-xs text-slate-500 leading-relaxed font-semibold">
                   {signal.body}
                 </p>
               </div>
@@ -281,31 +323,31 @@ export default function Landing() {
       </section>
 
       {/* ── Use cases ─────────────────────────────────────────── */}
-      <section className="bg-blue-600">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-semibold text-white">
-              Works for any community
+      <section className="bg-slate-900 relative overflow-hidden rounded-3xl max-w-6xl mx-auto my-6 px-6 py-16 text-center shadow-lg">
+        <div className="absolute inset-0 bg-hatch opacity-[0.03]"></div>
+        <div className="relative z-10 max-w-2xl mx-auto space-y-10">
+          <div className="space-y-3">
+            <h2 className="text-3xl font-extrabold text-white font-display tracking-tight">
+              Works at any structural scale
             </h2>
-            <p className="mt-2 text-blue-200 text-sm font-medium">
-              Deploy in minutes. No infrastructure setup required.
+            <p className="text-slate-400 text-xs sm:text-sm font-semibold">
+              Deployable in minutes for city administrations, academic campuses, residential complexes, and public entities.
             </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { emoji: '🏙️', label: 'City wards'         },
-              { emoji: '🎓', label: 'College campuses'    },
-              { emoji: '🏘️', label: 'Housing societies'   },
-              { emoji: '🏨', label: 'Hostel management'   },
+              { emoji: '🏙️', label: 'Municipal Wards' },
+              { emoji: '🎓', label: 'College Campuses' },
+              { emoji: '🏘️', label: 'Housing Societies' },
+              { emoji: '🏨', label: 'Public Institutions' },
             ].map(({ emoji, label }) => (
               <div key={label}
-                className="bg-blue-500/40 border border-blue-400/40
-                           rounded-2xl px-4 py-5 text-center">
-                <span className="text-3xl block mb-2" role="img">
+                className="bg-slate-800/40 border border-slate-800 rounded-2xl px-4 py-5 text-center transition-all hover:bg-slate-800/60">
+                <span className="text-3xl block mb-3.5" role="img">
                   {emoji}
                 </span>
-                <p className="text-sm font-semibold text-white">{label}</p>
+                <p className="text-xs font-bold text-slate-200">{label}</p>
               </div>
             ))}
           </div>
@@ -313,51 +355,43 @@ export default function Landing() {
       </section>
 
       {/* ── Final CTA ─────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-20 text-center">
-        <h2 className="text-3xl font-semibold text-gray-900 mb-4">
-          See what's happening near you
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-24 text-center space-y-6">
+        <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-display tracking-tight">
+          Explore local transparency today
         </h2>
-        <p className="text-gray-500 text-sm mb-8 max-w-md mx-auto font-medium">
-          Browse the live incident map without an account.
-          Create one to file reports and track resolutions.
+        <p className="text-slate-500 text-xs sm:text-sm max-w-md mx-auto font-semibold leading-relaxed">
+          Browse the active map and check local ward health statistics. Join verification drives or submit complaints by creating a profile.
         </p>
-        <div className="flex flex-wrap justify-center gap-3">
+        <div className="flex flex-wrap justify-center gap-3.5 pt-2">
           <Link to="/map"
-            className="inline-flex items-center gap-2 border border-gray-200
-                       text-gray-700 px-6 py-3 rounded-xl text-sm font-semibold
-                       hover:bg-gray-50 transition-all">
+            className="inline-flex items-center gap-2 border border-slate-200 bg-white text-slate-700 px-6 py-3 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all hover:border-slate-300">
             🗺 View live map
           </Link>
           <Link to="/register"
-            className="inline-flex items-center gap-2 bg-blue-600 text-white
-                       px-6 py-3 rounded-xl text-sm font-semibold
-                       hover:bg-blue-700 transition-all
-                       shadow-sm shadow-blue-600/20">
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-500/10 hover:scale-[1.02]">
             Create free account →
           </Link>
         </div>
       </section>
 
       {/* ── Footer ───────────────────────────────────────────── */}
-      <footer className="border-t border-gray-100 bg-gray-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8
-                        flex flex-col sm:flex-row items-center
-                        justify-between gap-4">
-          <p className="text-sm font-bold text-gray-900">
-            Civic<span className="text-blue-600">Pulse</span>
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 flex flex-col md:flex-row items-center justify-between gap-6">
+          <p className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+            <div className="h-6 w-6 rounded-md bg-blue-600 text-white grid place-items-center shadow-sm text-xs font-extrabold">CP</div>
+            CivicPulse
           </p>
-          <p className="text-xs text-gray-400 text-center font-medium">
-            Built for communities that deserve better infrastructure.
+          <p className="text-xs text-slate-400 font-medium max-w-md text-center md:text-left leading-relaxed">
+            Empowering communities through credible data and public records audit trails. Optimized for Indian smart cities and local governance wards.
           </p>
-          <div className="flex gap-5">
+          <div className="flex gap-6">
             {[
               { to: '/map',      label: 'Live map' },
-              { to: '/register', label: 'Sign up'  },
+              { to: '/register', label: 'Register'  },
               { to: '/login',    label: 'Sign in'  },
             ].map(({ to, label }) => (
               <Link key={to} to={to}
-                className="text-xs text-gray-400 hover:text-gray-600
-                           transition-colors font-semibold">
+                className="text-xs text-slate-400 hover:text-slate-950 font-bold transition-colors">
                 {label}
               </Link>
             ))}
@@ -412,7 +446,7 @@ function StatsRow({ stats }) {
 function ResolvedCard({ incident }) {
   const photo    = incident.reports?.[0]?.photoUrls?.[0];
   const category = incident.category;
-  const age      = formatAge(incident.updatedAt);
+  const age      = formatAge(incident.createdAt);
 
   return (
     <Link to={`/incident/${incident.id}`}

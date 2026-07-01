@@ -2,6 +2,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/ApiError.js";
 import { prisma } from "../../config/prisma.js";
 import * as service from "./incidents.service.js";
+import { env } from "../../config/env.js";
 import { emitToArea, emitToIncident, emitToUser } from "../realtime/socket.js";
 import { persistNotification } from "../realtime/notifications.service.js";
 import { redis } from "../../config/redis.js";
@@ -31,7 +32,7 @@ export const createIncident = asyncHandler(async (req, res) => {
   // Validate that URLs actually point to your Cloudinary account
   // (prevents users submitting arbitrary URLs)
   if (photoUrls && photoUrls.length > 0) {
-    const allowedHost = `res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME || ""}`;
+    const allowedHost = `res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME || ""}`;
     const allTrusted = photoUrls.every(url => url.includes(allowedHost));
 
     if (!allTrusted) {

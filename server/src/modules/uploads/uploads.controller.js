@@ -1,6 +1,7 @@
 import cloudinary from '../../config/cloudinary.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { ApiError } from '../../utils/ApiError.js';
+import { env } from '../../config/env.js';
 
 const log = {
   info: (obj, msg) => console.log(`[INFO] ${msg}`, obj),
@@ -34,7 +35,7 @@ export const getSignedUploadUrl = asyncHandler(async (req, res) => {
 
   const signature = cloudinary.utils.api_sign_request(
     paramsToSign,
-    process.env.CLOUDINARY_API_SECRET,
+    env.CLOUDINARY_API_SECRET,
   );
 
   log.info({ userId: req.user.id, folder }, 'Signed upload URL generated');
@@ -42,8 +43,8 @@ export const getSignedUploadUrl = asyncHandler(async (req, res) => {
   res.json({
     signature,
     timestamp,
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-    apiKey:    process.env.CLOUDINARY_API_KEY,
+    cloudName: env.CLOUDINARY_CLOUD_NAME,
+    apiKey:    env.CLOUDINARY_API_KEY,
     folder:    paramsToSign.folder,
     eager:     paramsToSign.eager,
   });
